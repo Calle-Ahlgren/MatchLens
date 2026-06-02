@@ -1,10 +1,16 @@
 from fastapi import FastAPI
 
+from app.api.events import router as events_router
+
+
 app = FastAPI(
     title="MatchLens API",
     description="Backend API for the MatchLens game telemetry analytics platform.",
     version="0.1.0",
 )
+
+
+app.include_router(events_router)
 
 
 @app.get("/health")
