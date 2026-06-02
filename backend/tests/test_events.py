@@ -40,3 +40,36 @@ def test_create_event_rejects_missing_match_id() -> None:
 
     assert response.status_code == 422
     assert "match_id" in str(response.json())
+
+
+def test_create_event_rejects_unknown_event_type() -> None:
+    test_event = {
+        "match_id": "match_001",
+        "event_type": "shotfired",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {
+            "damage": 34,
+            "weapon": "rifle"
+        }
+    }
+
+    response = client.post("/events", json=test_event)
+
+    assert response.status_code == 422
+
+
+def test_create_event_rejects_invalid_timestamp() -> None:
+    test_event = {
+        "match_id": "match_001",
+        "event_type": "shot_fired",
+        "player_id": "player_001",
+        "timestamp": "2026-0a-02T18:30:00Z",
+        "payload": {
+            "damage": 34,
+            "weapon": "rifle"
+        }
+    }
+    response = client.post("/events", json=test_event)
+
+    assert response.status_code == 422
