@@ -17,3 +17,9 @@ def get_events() -> list[TelemetryEventRead]:
 
 def clear_events() -> None:
     _events.clear()
+
+def get_event_by_id(event_id: str) -> TelemetryEventRead | None:
+    for event in _events:
+        if event.event_id == event_id:
+            return event
+    return None
