@@ -12,7 +12,6 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def clear_event_store() -> None:
     clear_events()
-    pass
 
 
 def test_create_event_accepts_valid_event() -> None:

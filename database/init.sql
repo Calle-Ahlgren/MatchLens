@@ -28,8 +28,11 @@ CREATE TABLE players (
 CREATE TABLE telemetry_events (
     event_id TEXT PRIMARY KEY,
     match_id TEXT NOT NULL REFERENCES matches(match_id),
-    player_id TEXT NOT NULL REFERENCES players(player_id),
+    player_id TEXT REFERENCES players(player_id),
     event_type TEXT NOT NULL,
+    -- API field name: timestamp
+    -- Database column name: occurred_at
+    -- Meaning: when the event happened in the simulated match.
     occurred_at TIMESTAMPTZ NOT NULL,
     payload JSONB NOT NULL,
     inserted_at TIMESTAMPTZ NOT NULL DEFAULT now()
