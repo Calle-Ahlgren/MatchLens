@@ -1,12 +1,16 @@
-from app.schemas.events import TelemetryEventCreate
+import uuid
 
-_events: list[TelemetryEventCreate] = []
-
-
-def add_event(event: TelemetryEventCreate) -> TelemetryEventCreate:
-    _events.append(event)
-    return event
+from app.schemas.events import TelemetryEventCreate, TelemetryEventRead
 
 
-def get_events() -> list[TelemetryEventCreate]:
+_events: list[TelemetryEventRead] = []
+
+
+def add_event(event: TelemetryEventCreate) -> TelemetryEventRead:
+    stored_event = TelemetryEventRead(event_id=str(uuid.uuid4()), **event.model_dump())
+    _events.append(stored_event)
+    return stored_event
+
+
+def get_events() -> list[TelemetryEventRead]:
     return _events

@@ -20,9 +20,16 @@ def test_create_event_accepts_valid_event() -> None:
 
     response = client.post("/events", json=event)
 
-    assert response.status_code == 200
+    response_json = response.json()
 
-    assert response.json() == event
+    assert response.status_code == 200
+    assert response_json["event_id"]
+    assert response_json["match_id"] == event["match_id"]
+    assert response_json["event_type"] == event["event_type"]
+    assert response_json["player_id"] == event["player_id"]
+    assert response_json["timestamp"] == event["timestamp"]
+    assert response_json["payload"] == event["payload"]
+
 
 
 def test_create_event_rejects_missing_match_id() -> None:
@@ -90,4 +97,15 @@ def test_list_events_returns_created_events() -> None:
     events = client.get("/events")
 
     assert events.status_code == 200
-    assert event in events.json()
+
+    events_json = events.json()
+
+    assert any(
+        stored_event["match_id"] == event["match_id"]
+        and stored_event["event_type"] == event["event_type"]
+        and stored_event["player_id"] == event["player_id"]
+        and stored_event["timestamp"] == event["timestamp"]
+        and stored_event["payload"] == event["payload"]
+        and stored_event["event_id"]
+        for stored_event in events_json
+)
