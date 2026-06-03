@@ -8,6 +8,7 @@ from app.services.event_store import clear_events
 
 client = TestClient(app)
 
+
 @pytest.fixture(autouse=True)
 def clear_event_store() -> None:
     clear_events()
@@ -23,7 +24,7 @@ def test_create_event_accepts_valid_event() -> None:
         "payload": {
             "damage": 34,
             "weapon": "rifle",
-        }
+        },
     }
 
     response = client.post("/events", json=event)
@@ -39,7 +40,6 @@ def test_create_event_accepts_valid_event() -> None:
     assert response_json["payload"] == event["payload"]
 
 
-
 def test_create_event_rejects_missing_match_id() -> None:
     event = {
         "event_type": "shot_fired",
@@ -48,7 +48,7 @@ def test_create_event_rejects_missing_match_id() -> None:
         "payload": {
             "damage": 34,
             "weapon": "rifle",
-        }
+        },
     }
 
     response = client.post("/events", json=event)
@@ -66,7 +66,7 @@ def test_create_event_rejects_unknown_event_type() -> None:
         "payload": {
             "damage": 34,
             "weapon": "rifle",
-        }
+        },
     }
 
     response = client.post("/events", json=event)
@@ -83,11 +83,12 @@ def test_create_event_rejects_invalid_timestamp() -> None:
         "payload": {
             "damage": 34,
             "weapon": "rifle",
-        }
+        },
     }
     response = client.post("/events", json=event)
 
     assert response.status_code == 422
+
 
 def test_list_events_returns_created_events() -> None:
     event = {
@@ -98,10 +99,10 @@ def test_list_events_returns_created_events() -> None:
         "payload": {
             "damage": 34,
             "weapon": "rifle",
-        }
+        },
     }
 
-    response = client.post("/events", json=event)
+    client.post("/events", json=event)
     events = client.get("/events")
 
     assert events.status_code == 200
@@ -116,6 +117,7 @@ def test_list_events_returns_created_events() -> None:
     assert events_json[0]["payload"] == event["payload"]
     assert events_json[0]["event_id"]
 
+
 def test_get_event_by_id_returns_created_event() -> None:
     event = {
         "match_id": "match_001",
@@ -125,7 +127,7 @@ def test_get_event_by_id_returns_created_event() -> None:
         "payload": {
             "damage": 34,
             "weapon": "rifle",
-        }
+        },
     }
 
     post_response = client.post("/events", json=event)
@@ -144,6 +146,7 @@ def test_get_event_by_id_returns_created_event() -> None:
     assert get_event["timestamp"] == event["timestamp"]
     assert get_event["payload"] == event["payload"]
 
+
 def test_get_event_by_id_returns_404_for_unknown_event() -> None:
     event = {
         "match_id": "match_001",
@@ -153,7 +156,7 @@ def test_get_event_by_id_returns_404_for_unknown_event() -> None:
         "payload": {
             "damage": 34,
             "weapon": "rifle",
-        }
+        },
     }
 
     client.post("/events", json=event)
@@ -161,4 +164,4 @@ def test_get_event_by_id_returns_404_for_unknown_event() -> None:
     response = client.get("/events/not_an_id")
 
     assert response.status_code == 404
-    assert response.json()["detail"] ==  "Event not found"
+    assert response.json()["detail"] == "Event not found"

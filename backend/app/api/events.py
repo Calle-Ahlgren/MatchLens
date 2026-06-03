@@ -16,10 +16,11 @@ def create_event(event: TelemetryEventCreate) -> TelemetryEventRead:
 def list_events() -> list[TelemetryEventRead]:
     return get_events()
 
+
 @router.get("/{event_id}")
 def get_event(event_id: str) -> TelemetryEventRead:
     event = get_event_by_id(event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    
+
     return event

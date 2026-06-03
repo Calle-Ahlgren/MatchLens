@@ -22,5 +22,6 @@ class TelemetryEventCreate(BaseModel):
     timestamp: datetime
     payload: dict[str, Any] = Field(default_factory=dict)
 
+
 class TelemetryEventRead(TelemetryEventCreate):
     event_id: str = Field(min_length=1)
