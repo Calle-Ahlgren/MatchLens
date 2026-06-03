@@ -14,3 +14,6 @@ def add_event(event: TelemetryEventCreate) -> TelemetryEventRead:
 
 def get_events() -> list[TelemetryEventRead]:
     return _events
+
+def clear_events() -> None:
+    _events.clear()

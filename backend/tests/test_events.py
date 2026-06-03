@@ -1,9 +1,17 @@
+import pytest
+
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.services.event_store import clear_events
 
 
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def clear_event_store() -> None:
+    clear_events()
+    pass
 
 
 def test_create_event_accepts_valid_event() -> None:
@@ -14,7 +22,7 @@ def test_create_event_accepts_valid_event() -> None:
         "timestamp": "2026-06-02T18:30:00Z",
         "payload": {
             "damage": 34,
-            "weapon": "rifle"
+            "weapon": "rifle",
         }
     }
 
@@ -39,7 +47,7 @@ def test_create_event_rejects_missing_match_id() -> None:
         "timestamp": "2026-06-02T18:30:00Z",
         "payload": {
             "damage": 34,
-            "weapon": "rifle"
+            "weapon": "rifle",
         }
     }
 
@@ -57,7 +65,7 @@ def test_create_event_rejects_unknown_event_type() -> None:
         "timestamp": "2026-06-02T18:30:00Z",
         "payload": {
             "damage": 34,
-            "weapon": "rifle"
+            "weapon": "rifle",
         }
     }
 
@@ -74,7 +82,7 @@ def test_create_event_rejects_invalid_timestamp() -> None:
         "timestamp": "2026-0a-02T18:30:00Z",
         "payload": {
             "damage": 34,
-            "weapon": "rifle"
+            "weapon": "rifle",
         }
     }
     response = client.post("/events", json=event)
@@ -89,7 +97,7 @@ def test_list_events_returns_created_events() -> None:
         "timestamp": "2026-06-02T18:30:00Z",
         "payload": {
             "damage": 34,
-            "weapon": "rifle"
+            "weapon": "rifle",
         }
     }
 
@@ -100,12 +108,10 @@ def test_list_events_returns_created_events() -> None:
 
     events_json = events.json()
 
-    assert any(
-        stored_event["match_id"] == event["match_id"]
-        and stored_event["event_type"] == event["event_type"]
-        and stored_event["player_id"] == event["player_id"]
-        and stored_event["timestamp"] == event["timestamp"]
-        and stored_event["payload"] == event["payload"]
-        and stored_event["event_id"]
-        for stored_event in events_json
-)
+    assert len(events_json) == 1
+    assert events_json[0]["match_id"] == event["match_id"]
+    assert events_json[0]["event_type"] == event["event_type"]
+    assert events_json[0]["player_id"] == event["player_id"]
+    assert events_json[0]["timestamp"] == event["timestamp"]
+    assert events_json[0]["payload"] == event["payload"]
+    assert events_json[0]["event_id"]
