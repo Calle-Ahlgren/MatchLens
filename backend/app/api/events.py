@@ -1,18 +1,16 @@
 from fastapi import APIRouter
-
+from app.services.event_store import add_event, get_events
 from app.schemas.events import TelemetryEventCreate
 
 
 router = APIRouter(prefix="/events", tags=["events"])
 
-events: list[TelemetryEventCreate] = []
 
 @router.post("")
 def create_event(event: TelemetryEventCreate) -> TelemetryEventCreate:
-    events.append(event)
-    return event
+    return add_event(event)
 
 
 @router.get("")
 def list_events() -> list[TelemetryEventCreate]:
-    return events
+    return get_events()
