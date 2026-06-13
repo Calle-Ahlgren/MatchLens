@@ -1,5 +1,3 @@
-from datetime import UTC, datetime
-
 from app.db.connection import get_connection
 from app.db.player_repository import create_player
 from tests.db_test_utils import clear_database_tables
@@ -12,7 +10,7 @@ def test_create_player_inserts_player_row() -> None:
         player_query = """
             SELECT player_id, display_name
             FROM players
-            WHERE player_id = %s            
+            WHERE player_id = %s        
         """
         player_id = ("player_test",)
 
