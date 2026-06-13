@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from app.db.connection import get_connection
-from app.db.event_repository import *
+from app.db.event_repository import create_event, get_event_by_id, list_events
 from app.db.match_repository import create_match
 from app.db.player_repository import create_player
 from app.schemas.events import EventType, TelemetryEventCreate, TelemetryEventRead
@@ -84,7 +84,7 @@ def test_list_events_returns_created_events_in_time_order() -> None:
         event_type=EventType.SHOT_FIRED,
         player_id=player_test_id,
         timestamp=timestamp_later,
-        payload=payload_test
+        payload=payload_test,
     )
 
     event2 = TelemetryEventCreate(
@@ -96,7 +96,7 @@ def test_list_events_returns_created_events_in_time_order() -> None:
             "x": 0,
             "y": 1,
             "z": 0
-        }
+        },
     )
 
     create_event(event1)

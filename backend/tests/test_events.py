@@ -1,20 +1,39 @@
-import pytest
+from datetime import UTC, datetime
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.db.match_repository import create_match
+from app.db.player_repository import create_player
 from app.main import app
 from app.services.event_store import clear_events
-
+from tests.db_test_utils import clear_database_tables
 
 client = TestClient(app)
+TEST_MATCH_ID = "match_001"
+TEST_MATCH_TIMESTAMP = datetime(2026, 1, 1, 1, 1, 1, tzinfo=UTC)
+TEST_PLAYER_ID = "player_001"
 
 
 @pytest.fixture(autouse=True)
-def clear_event_store() -> None:
+def clear_test_state() -> None:
     clear_events()
+    clear_database_tables()
+
+    yield
+
+    clear_events()
+    clear_database_tables()
+    
+
+def create_required_event_parents() -> None:
+    create_match(TEST_MATCH_ID, TEST_MATCH_TIMESTAMP, "map_test", "mode_test")
+    create_player(TEST_PLAYER_ID, "display_name_test")
 
 
 def test_create_event_accepts_valid_event() -> None:
+    create_required_event_parents()
+
     event = {
         "match_id": "match_001",
         "event_type": "shot_fired",
@@ -90,6 +109,8 @@ def test_create_event_rejects_invalid_timestamp() -> None:
 
 
 def test_list_events_returns_created_events() -> None:
+    create_required_event_parents()
+
     event = {
         "match_id": "match_001",
         "event_type": "shot_fired",
@@ -118,6 +139,8 @@ def test_list_events_returns_created_events() -> None:
 
 
 def test_get_event_by_id_returns_created_event() -> None:
+    create_required_event_parents()
+
     event = {
         "match_id": "match_001",
         "event_type": "shot_fired",
@@ -147,19 +170,6 @@ def test_get_event_by_id_returns_created_event() -> None:
 
 
 def test_get_event_by_id_returns_404_for_unknown_event() -> None:
-    event = {
-        "match_id": "match_001",
-        "event_type": "shot_fired",
-        "player_id": "player_001",
-        "timestamp": "2026-06-02T18:30:00Z",
-        "payload": {
-            "damage": 34,
-            "weapon": "rifle",
-        },
-    }
-
-    client.post("/events", json=event)
-
     response = client.get("/events/not_an_id")
 
     assert response.status_code == 404
