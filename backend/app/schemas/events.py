@@ -6,13 +6,11 @@ from pydantic import BaseModel, Field
 
 
 class EventType(StrEnum):
-    MATCH_STARTED = "match_started"
     PLAYER_SPAWNED = "player_spawned"
     POSITION_UPDATED = "position_updated"
     SHOT_FIRED = "shot_fired"
     PLAYER_HIT = "player_hit"
     PLAYER_KILLED = "player_killed"
-    MATCH_ENDED = "match_ended"
 
 
 class TelemetryEventCreate(BaseModel):

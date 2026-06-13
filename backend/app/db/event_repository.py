@@ -32,3 +32,52 @@ def create_event(event: TelemetryEventCreate) -> TelemetryEventRead:
         conn.execute(event_insert, event_values)
     
     return TelemetryEventRead(event_id=event_id, **event.model_dump())
+
+def get_event_by_id(event_id: str) -> TelemetryEventRead | None:
+    query = """
+        SELECT event_id, match_id, event_type, player_id, occurred_at, payload
+        FROM telemetry_events
+        WHERE event_id = %s
+    """
+
+    with get_connection() as conn:
+        cursor = conn.execute(query, (event_id,))
+        result = cursor.fetchone()
+
+    if result is None:
+        return None
+
+    return TelemetryEventRead(
+        event_id=result[0],
+        match_id=result[1],
+        event_type=result[2],
+        player_id=result[3],
+        timestamp=result[4],
+        payload=result[5],
+    )
+
+def list_events() -> list[TelemetryEventRead]:
+    query = """
+        SELECT event_id, match_id, event_type, player_id, occurred_at, payload
+        FROM telemetry_events
+        ORDER BY occurred_at
+    """
+
+    events = []
+
+    with get_connection() as conn:
+        rows = conn.execute(query).fetchall()
+
+    for row in rows:
+        events.append(
+            TelemetryEventRead(
+                event_id=row[0],
+                match_id=row[1],
+                event_type=row[2],
+                player_id=row[3],
+                timestamp=row[4],
+                payload=row[5],
+            )
+        )
+
+    return events
