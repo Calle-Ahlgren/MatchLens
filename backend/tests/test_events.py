@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from app.db.match_repository import create_match
 from app.db.player_repository import create_player
 from app.main import app
-from app.services.event_store import clear_events
 from tests.db_test_utils import clear_database_tables
 
 client = TestClient(app)
@@ -17,14 +16,12 @@ TEST_PLAYER_ID = "player_001"
 
 @pytest.fixture(autouse=True)
 def clear_test_state() -> None:
-    clear_events()
     clear_database_tables()
 
     yield
 
-    clear_events()
     clear_database_tables()
-    
+
 
 def create_required_event_parents() -> None:
     create_match(TEST_MATCH_ID, TEST_MATCH_TIMESTAMP, "map_test", "mode_test")

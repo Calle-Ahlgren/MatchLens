@@ -3,9 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.db import event_repository
 from app.schemas.events import TelemetryEventCreate, TelemetryEventRead
 
-
 router = APIRouter(prefix="/events", tags=["events"])
-
 
 @router.post("")
 def create_event(event: TelemetryEventCreate) -> TelemetryEventRead:
