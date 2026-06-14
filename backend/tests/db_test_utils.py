@@ -29,7 +29,7 @@ def create_test_match() -> MatchRead:
 def create_test_player() -> PlayerRead:
     player = PlayerCreate(
         player_id=data.TEST_PLAYER_ID_1,
-        display_name=data.TEST_DISPLAY_NAME,
+        display_name=data.TEST_DISPLAY_NAME_1,
     )
     return create_player(player)
 

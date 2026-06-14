@@ -6,10 +6,6 @@ from tests.db_test_utils import clear_database_tables, create_test_player
 import sample_data as data
 
 
-TEST_PLAYER_ID = "player_test"
-TEST_DISPLAY_NAME = "display_name_test"
-
-
 @pytest.fixture(autouse=True)
 def clear_test_database() -> None:
     clear_database_tables()
@@ -35,7 +31,7 @@ def test_create_player_inserts_player_row() -> None:
         assert result is not None
 
         assert result[0] == data.TEST_PLAYER_ID_1
-        assert result[1] == data.TEST_DISPLAY_NAME
+        assert result[1] == data.TEST_DISPLAY_NAME_1
 
 
 def test_get_player_by_id_returns_created_player() -> None:
@@ -46,7 +42,7 @@ def test_get_player_by_id_returns_created_player() -> None:
     assert player is not None
 
     assert player.player_id == data.TEST_PLAYER_ID_1
-    assert player.display_name == data.TEST_DISPLAY_NAME
+    assert player.display_name == data.TEST_DISPLAY_NAME_1
 
 
 def test_get_player_by_id_returns_none_for_unknown_player() -> None:
