@@ -1,9 +1,7 @@
-from datetime import UTC, datetime
-
 import pytest
 
 from app.db.connection import get_connection
-from app.db.player_repository import create_player, get_player_by_id, list_players
+from app.db.player_repository import get_player_by_id
 from tests.db_test_utils import clear_database_tables, create_test_player
 import sample_data as data
 
@@ -51,5 +49,5 @@ def test_get_player_by_id_returns_created_player() -> None:
     assert player.display_name == data.TEST_DISPLAY_NAME
 
 
-def test_get_player_by_id_returns_none_for_unknown_match() -> None:
+def test_get_player_by_id_returns_none_for_unknown_player() -> None:
     assert get_player_by_id("-1") is None

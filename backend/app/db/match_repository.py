@@ -1,8 +1,6 @@
 # Database repository functions for matches.
 # These are not wired into the API yet.
 
-from datetime import datetime
-
 from app.db.connection import get_connection
 from app.schemas.matches import MatchCreate, MatchRead
 

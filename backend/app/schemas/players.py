@@ -9,7 +9,4 @@ class PlayerCreate(BaseModel):
 
 
 class PlayerRead(PlayerCreate):
-    # TODO:
-    # For now, PlayerRead can be identical to PlayerRead.
-    # Later we may add ended_at or computed summary fields.
-    pass
+    created_at: datetime

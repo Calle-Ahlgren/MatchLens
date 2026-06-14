@@ -9,14 +9,19 @@ def create_player(player: PlayerCreate) -> PlayerRead:
             display_name
         )
         VALUES (%s, %s)
+        RETURNING player_id, display_name, created_at
     """
 
     player_values = (player.player_id, player.display_name)
 
     with get_connection() as conn:
-        conn.execute(player_insert, player_values)
+        result = conn.execute(player_insert, player_values).fetchone()
     
-    return PlayerRead(**player.model_dump())
+    return PlayerRead(
+        player_id=result[0],
+        display_name=result[1],
+        created_at=result[2],
+    )
 
 
 def get_player_by_id(player_id: str) -> PlayerRead | None:

@@ -22,6 +22,6 @@ def get_player(player_id: str) -> PlayerRead:
     player = player_repository.get_player_by_id(player_id)
 
     if player is None:
-        raise HTTPException(status_code=404, detail="player not found")
+        raise HTTPException(status_code=404, detail="Player not found")
 
     return player

@@ -55,4 +55,4 @@ def test_get_player_by_id_returns_404_for_unknown_player() -> None:
 
     assert response.status_code == 404
 
-    assert response.json()["detail"] == "player not found"
+    assert response.json()["detail"] == "Player not found"

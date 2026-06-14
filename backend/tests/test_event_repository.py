@@ -1,5 +1,3 @@
-from datetime import UTC, datetime
-
 import pytest
 
 from app.db.connection import get_connection
