@@ -1,17 +1,11 @@
-from datetime import UTC, datetime
-
 import pytest
 from fastapi.testclient import TestClient
 
-from app.db.match_repository import create_match
-from app.db.player_repository import create_player
 from app.main import app
-from tests.db_test_utils import clear_database_tables
+from tests.db_test_utils import clear_database_tables, create_test_match, create_test_player
+
 
 client = TestClient(app)
-TEST_MATCH_ID = "match_001"
-TEST_MATCH_TIMESTAMP = datetime(2026, 1, 1, 1, 1, 1, tzinfo=UTC)
-TEST_PLAYER_ID = "player_001"
 
 
 @pytest.fixture(autouse=True)
@@ -24,8 +18,8 @@ def clear_test_state() -> None:
 
 
 def create_required_event_parents() -> None:
-    create_match(TEST_MATCH_ID, TEST_MATCH_TIMESTAMP, "map_test", "mode_test")
-    create_player(TEST_PLAYER_ID, "display_name_test")
+    create_test_match()
+    create_test_player()
 
 
 def test_create_event_accepts_valid_event() -> None:

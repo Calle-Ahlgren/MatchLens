@@ -4,12 +4,10 @@
 from datetime import datetime
 
 from app.db.connection import get_connection
-from app.schemas.matches import MatchRead
+from app.schemas.matches import MatchCreate, MatchRead
 
 
-def create_match(
-    match_id: str, started_at: datetime, map_name: str, game_mode: str
-) -> None:
+def create_match(match: MatchCreate) -> MatchRead:
     match_insert = """
         INSERT INTO matches (
             match_id,
@@ -19,10 +17,12 @@ def create_match(
         )
         VALUES (%s, %s, %s, %s)
     """
-    match_values = (match_id, started_at, map_name, game_mode)
+    match_values = (match.match_id, match.started_at, match.map_name, match.game_mode)
 
     with get_connection() as conn:
         conn.execute(match_insert, match_values)
+
+    return MatchRead(**match.model_dump())
 
 
 def get_match_by_id(match_id: str) -> MatchRead | None:

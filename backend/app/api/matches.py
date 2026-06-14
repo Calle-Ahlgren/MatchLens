@@ -9,13 +9,7 @@ router = APIRouter(prefix="/matches", tags=["matches"])
 
 @router.post("")
 def create_match(match: MatchCreate) -> MatchRead:
-    match_repository.create_match(
-        match.match_id,
-        match.started_at,
-        match.map_name,
-        match.game_mode,
-    )
-    return MatchRead(**match.model_dump())
+    return match_repository.create_match(match)
 
 
 @router.get("")

@@ -1,43 +1,23 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from app.db.connection import get_connection
 from app.db.event_repository import create_event, get_event_by_id, list_events
-from app.db.match_repository import create_match
-from app.db.player_repository import create_player
-from app.schemas.events import EventType, TelemetryEventCreate, TelemetryEventRead
-from tests.db_test_utils import clear_database_tables
-
-match_test_id = "match_test"
-timestamp_test = datetime(2026, 1, 1, 1, 1, 1, tzinfo=UTC)
-player_test_id = "player_test"
-payload_test = {
-    "weapon": "rifle",
-    "damage": 34,
-}
+from app.schemas.events import EventType, TelemetryEventCreate
+import sample_data as data
+from tests.db_test_utils import (
+    clear_database_tables, create_test_event, create_test_match, create_test_player,
+)
 
 
-def create_test_match() -> None:
-    create_match(match_test_id, timestamp_test, "map_test", "mode_test")
-
-
-def create_test_player() -> None:
-    create_player(player_test_id, "display_name_test")
-
-
-def create_test_event() -> TelemetryEventRead:
+@pytest.fixture(autouse=True)
+def clear_test_state() -> None:
     clear_database_tables()
-    create_test_match()
-    create_test_player()
 
-    event = TelemetryEventCreate(
-        match_id=match_test_id,
-        event_type=EventType.SHOT_FIRED,
-        player_id=player_test_id,
-        timestamp=timestamp_test,
-        payload=payload_test,
-    )
+    yield
 
-    return create_event(event)
+    clear_database_tables()
 
 
 def test_create_event_inserts_telemetry_event_row() -> None:
@@ -74,30 +54,26 @@ def test_get_event_by_id_returns_created_event() -> None:
 
 
 def test_get_event_by_id_returns_none_for_unknown_event() -> None:
-    clear_database_tables()
     assert get_event_by_id("-1") is None
 
 
 def test_list_events_returns_created_events_in_time_order() -> None:
-    clear_database_tables()
     create_test_match()
     create_test_player()
 
-    timestamp_later = datetime(2026, 1, 1, 1, 2, 1, tzinfo=UTC)
-
     event1 = TelemetryEventCreate(
-        match_id=match_test_id,
+        match_id=data.TEST_MATCH_ID_1,
         event_type=EventType.SHOT_FIRED,
-        player_id=player_test_id,
-        timestamp=timestamp_later,
-        payload=payload_test,
+        player_id=data.TEST_PLAYER_ID_1,
+        timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
+        payload=data.test_payload(),
     )
 
     event2 = TelemetryEventCreate(
-        match_id=match_test_id,
+        match_id=data.TEST_MATCH_ID_1,
         event_type=EventType.PLAYER_SPAWNED,
-        player_id=player_test_id,
-        timestamp=timestamp_test,
+        player_id=data.TEST_PLAYER_ID_1,
+        timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
         payload={"x": 0, "y": 1, "z": 0},
     )
 
@@ -108,5 +84,5 @@ def test_list_events_returns_created_events_in_time_order() -> None:
 
     assert len(events) == 2
 
-    assert events[0].timestamp == timestamp_test
-    assert events[1].timestamp == timestamp_later
+    assert events[0].timestamp == data.TEST_MATCH_TIMESTAMP_EARLY
+    assert events[1].timestamp == data.TEST_MATCH_TIMESTAMP_LATE
