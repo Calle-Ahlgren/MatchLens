@@ -30,8 +30,9 @@ def create_event(event: TelemetryEventCreate) -> TelemetryEventRead:
 
     with get_connection() as conn:
         conn.execute(event_insert, event_values)
-    
+
     return TelemetryEventRead(event_id=event_id, **event.model_dump())
+
 
 def get_event_by_id(event_id: str) -> TelemetryEventRead | None:
     query = """
@@ -55,6 +56,7 @@ def get_event_by_id(event_id: str) -> TelemetryEventRead | None:
         timestamp=result[4],
         payload=result[5],
     )
+
 
 def list_events() -> list[TelemetryEventRead]:
     query = """

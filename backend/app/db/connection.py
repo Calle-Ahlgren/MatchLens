@@ -22,4 +22,3 @@ def get_connection() -> Connection:
     connections.
     """
     return psycopg.connect(DATABASE_URL)
-    

@@ -78,3 +78,21 @@ def test_create_match_rejects_empty_match_id() -> None:
     response = client.post("/matches", json=match)
 
     assert response.status_code == 422
+
+
+def test_list_matches_returns_created_matches_in_start_time_order() -> None:
+    timestamp_late = datetime(2026, 1, 1, 2, 1, 1, tzinfo=UTC)
+    create_match("match_002", timestamp_late, TEST_MAP, TEST_MODE)
+    create_match(TEST_MATCH_ID, TEST_MATCH_TIMESTAMP, TEST_MAP, TEST_MODE)
+
+    response = client.get("/matches")
+    matches = response.json()
+
+    assert response.status_code == 200
+    assert len(matches) == 2
+
+    assert matches[0]["match_id"] == TEST_MATCH_ID
+    assert matches[0]["started_at"] == "2026-01-01T01:01:01Z"
+
+    assert matches[1]["match_id"] == "match_002"
+    assert matches[1]["started_at"] == "2026-01-01T02:01:01Z"

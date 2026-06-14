@@ -11,15 +11,18 @@ match_test_id = "match_test"
 timestamp_test = datetime(2026, 1, 1, 1, 1, 1, tzinfo=UTC)
 player_test_id = "player_test"
 payload_test = {
-        "weapon": "rifle",
-        "damage": 34,
-    }
+    "weapon": "rifle",
+    "damage": 34,
+}
+
 
 def create_test_match() -> None:
     create_match(match_test_id, timestamp_test, "map_test", "mode_test")
 
+
 def create_test_player() -> None:
     create_player(player_test_id, "display_name_test")
+
 
 def create_test_event() -> TelemetryEventRead:
     clear_database_tables()
@@ -31,12 +34,13 @@ def create_test_event() -> TelemetryEventRead:
         event_type=EventType.SHOT_FIRED,
         player_id=player_test_id,
         timestamp=timestamp_test,
-        payload=payload_test
+        payload=payload_test,
     )
 
     return create_event(event)
 
-def test_create_event_inserts_telemetry_event_row() -> None:    
+
+def test_create_event_inserts_telemetry_event_row() -> None:
     event = create_test_event()
 
     with get_connection() as conn:
@@ -53,6 +57,7 @@ def test_create_event_inserts_telemetry_event_row() -> None:
         assert result[1] == event.player_id
         assert result[2] == event.event_type.value
         assert result[3] == event.payload
+
 
 def test_get_event_by_id_returns_created_event() -> None:
     created_event = create_test_event()
@@ -71,6 +76,7 @@ def test_get_event_by_id_returns_created_event() -> None:
 def test_get_event_by_id_returns_none_for_unknown_event() -> None:
     clear_database_tables()
     assert get_event_by_id("-1") is None
+
 
 def test_list_events_returns_created_events_in_time_order() -> None:
     clear_database_tables()
@@ -92,11 +98,7 @@ def test_list_events_returns_created_events_in_time_order() -> None:
         event_type=EventType.PLAYER_SPAWNED,
         player_id=player_test_id,
         timestamp=timestamp_test,
-        payload={
-            "x": 0,
-            "y": 1,
-            "z": 0
-        },
+        payload={"x": 0, "y": 1, "z": 0},
     )
 
     create_event(event1)

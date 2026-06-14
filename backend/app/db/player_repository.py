@@ -1,5 +1,6 @@
 from app.db.connection import get_connection
 
+
 def create_player(player_id: str, display_name: str) -> None:
     with get_connection() as conn:
         player_insert = """

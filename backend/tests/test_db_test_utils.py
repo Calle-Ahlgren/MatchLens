@@ -22,7 +22,7 @@ def test_clear_database_tables_removes_match_rows() -> None:
             "mode_repo_test",
         )
         conn.execute(match_insert, match_values)
-        
+
     clear_database_tables()
 
     with get_connection() as conn:

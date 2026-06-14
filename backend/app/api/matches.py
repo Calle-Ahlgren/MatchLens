@@ -6,15 +6,22 @@ from app.schemas.matches import MatchCreate, MatchRead
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 
+
 @router.post("")
 def create_match(match: MatchCreate) -> MatchRead:
     match_repository.create_match(
-        match.match_id, 
-        match.started_at, 
-        match.map_name, 
-        match.game_mode
+        match.match_id,
+        match.started_at,
+        match.map_name,
+        match.game_mode,
     )
     return MatchRead(**match.model_dump())
+
+
+@router.get("")
+def list_matches() -> list[MatchRead]:
+    return match_repository.list_matches()
+
 
 @router.get("/{match_id}")
 def get_match(match_id: str) -> MatchRead:
@@ -24,5 +31,3 @@ def get_match(match_id: str) -> MatchRead:
         raise HTTPException(status_code=404, detail="Match not found")
 
     return match
-
-

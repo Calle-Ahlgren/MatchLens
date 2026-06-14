@@ -5,6 +5,7 @@ from app.schemas.events import TelemetryEventCreate, TelemetryEventRead
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+
 @router.post("")
 def create_event(event: TelemetryEventCreate) -> TelemetryEventRead:
     return event_repository.create_event(event)
