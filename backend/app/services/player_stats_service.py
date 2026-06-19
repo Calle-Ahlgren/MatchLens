@@ -21,7 +21,7 @@ def compute_player_match_stats(
     player_id: str,
 ) -> PlayerMatchStats:
     shots_fired, hits, kills, deaths = 0, 0, 0, 0
-    
+
     for event in events:
         match event.event_type:
             case EventType.SHOT_FIRED:
@@ -36,7 +36,7 @@ def compute_player_match_stats(
     accuracy = 0.0
 
     if shots_fired != 0:
-        accuracy = hits/shots_fired
+        accuracy = hits / shots_fired
 
     return PlayerMatchStats(
         match_id=match_id,

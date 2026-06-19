@@ -11,6 +11,7 @@ TEST_DISPLAY_NAME_2 = "display_002"
 TEST_MAP = "map_001"
 TEST_MODE = "mode_001"
 
+
 def test_payload() -> dict[str, object]:
     return {
         "weapon": "rifle",

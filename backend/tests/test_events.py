@@ -2,7 +2,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from tests.db_test_utils import clear_database_tables, create_test_match, create_test_player
+from tests.db_test_utils import (
+    clear_database_tables,
+    create_test_match,
+    create_test_player,
+)
 
 
 client = TestClient(app)

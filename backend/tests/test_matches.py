@@ -6,7 +6,11 @@ from app.db.event_repository import create_event
 from app.main import app
 from app.schemas.matches import MatchCreate
 from app.schemas.events import TelemetryEventCreate, EventType
-from tests.db_test_utils import clear_database_tables, create_test_match, create_test_player
+from tests.db_test_utils import (
+    clear_database_tables,
+    create_test_match,
+    create_test_player,
+)
 import sample_data as data
 
 

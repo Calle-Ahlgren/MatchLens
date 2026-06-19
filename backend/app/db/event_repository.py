@@ -57,7 +57,9 @@ def get_event_by_id(event_id: str) -> TelemetryEventRead | None:
     )
 
 
-def _list_query(query: str, params: tuple[object, ...] = ()) -> list[TelemetryEventRead]:
+def _list_query(
+    query: str, params: tuple[object, ...] = ()
+) -> list[TelemetryEventRead]:
     events = []
 
     with get_connection() as conn:
@@ -76,6 +78,7 @@ def _list_query(query: str, params: tuple[object, ...] = ()) -> list[TelemetryEv
         )
 
     return events
+
 
 def list_events() -> list[TelemetryEventRead]:
     query = """

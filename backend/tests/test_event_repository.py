@@ -2,7 +2,11 @@ import pytest
 
 from app.db.connection import get_connection
 from app.db.event_repository import (
-    create_event, get_event_by_id, list_events, list_events_by_match_id, list_player_match_events
+    create_event,
+    get_event_by_id,
+    list_events,
+    list_events_by_match_id,
+    list_player_match_events,
 )
 from app.db.match_repository import create_match
 from app.db.player_repository import create_player
@@ -11,7 +15,10 @@ from app.schemas.matches import MatchCreate
 from app.schemas.players import PlayerCreate
 import sample_data as data
 from tests.db_test_utils import (
-    clear_database_tables, create_test_event, create_test_match, create_test_player,
+    clear_database_tables,
+    create_test_event,
+    create_test_match,
+    create_test_player,
 )
 
 
@@ -151,8 +158,7 @@ def test_list_player_match_events_returns_only_events_for_player_in_match() -> N
 
     create_player(
         PlayerCreate(
-            player_id=data.TEST_PLAYER_ID_2,
-            display_name=data.TEST_DISPLAY_NAME_2
+            player_id=data.TEST_PLAYER_ID_2, display_name=data.TEST_DISPLAY_NAME_2
         )
     )
     create_match(
@@ -160,7 +166,7 @@ def test_list_player_match_events_returns_only_events_for_player_in_match() -> N
             match_id=data.TEST_MATCH_ID_2,
             started_at=data.TEST_MATCH_TIMESTAMP_EARLY,
             map_name=data.TEST_MAP,
-            game_mode=data.TEST_MODE
+            game_mode=data.TEST_MODE,
         )
     )
 

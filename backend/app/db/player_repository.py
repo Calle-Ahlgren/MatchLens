@@ -16,7 +16,7 @@ def create_player(player: PlayerCreate) -> PlayerRead:
 
     with get_connection() as conn:
         result = conn.execute(player_insert, player_values).fetchone()
-    
+
     return PlayerRead(
         player_id=result[0],
         display_name=result[1],
@@ -35,7 +35,7 @@ def get_player_by_id(player_id: str) -> PlayerRead | None:
 
     if result is None:
         return None
-    
+
     return PlayerRead(
         player_id=result[0],
         display_name=result[1],

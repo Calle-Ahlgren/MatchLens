@@ -17,6 +17,7 @@ def _get_match_or_404(match_id: str) -> MatchRead:
 
     return match
 
+
 @router.post("")
 def create_match(match: MatchCreate) -> MatchRead:
     return match_repository.create_match(match)
@@ -35,5 +36,5 @@ def get_match(match_id: str) -> MatchRead:
 @router.get("/{match_id}/events")
 def list_match_events(match_id: str) -> list[TelemetryEventRead]:
     _get_match_or_404(match_id)
-    
+
     return event_repository.list_events_by_match_id(match_id)

@@ -62,8 +62,7 @@ def test_list_players_returns_created_players() -> None:
     create_test_player()
     create_player(
         PlayerCreate(
-            player_id=data.TEST_PLAYER_ID_2,
-            display_name=data.TEST_DISPLAY_NAME_2
+            player_id=data.TEST_PLAYER_ID_2, display_name=data.TEST_DISPLAY_NAME_2
         )
     )
 
