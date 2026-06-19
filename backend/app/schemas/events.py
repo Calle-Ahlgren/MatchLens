@@ -11,6 +11,7 @@ class EventType(StrEnum):
     SHOT_FIRED = "shot_fired"
     PLAYER_HIT = "player_hit"
     PLAYER_KILLED = "player_killed"
+    PLAYER_DEATH = "player_death"
 
 
 class TelemetryEventCreate(BaseModel):

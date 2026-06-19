@@ -2,9 +2,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.db.match_repository import create_match
+from app.db.event_repository import create_event
 from app.main import app
 from app.schemas.matches import MatchCreate
-from tests.db_test_utils import clear_database_tables, create_test_match
+from app.schemas.events import TelemetryEventCreate, EventType
+from tests.db_test_utils import clear_database_tables, create_test_match, create_test_player
 import sample_data as data
 
 
@@ -97,3 +99,74 @@ def test_list_matches_returns_created_matches_in_start_time_order() -> None:
 
     assert matches[1]["match_id"] == "match_002"
     assert matches[1]["started_at"] == "2026-01-01T02:01:01Z"
+
+
+def test_get_match_events_returns_only_events_for_that_match() -> None:
+    create_match(
+        MatchCreate(
+            match_id=data.TEST_MATCH_ID_2,
+            started_at=data.TEST_MATCH_TIMESTAMP_LATE,
+            map_name=data.TEST_MAP,
+            game_mode=data.TEST_MODE,
+        )
+    )
+    create_test_match()
+    create_test_player()
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.POSITION_UPDATED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
+            payload={"x": 0, "y": 0, "z": 1},
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.SHOT_FIRED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
+            payload=data.test_payload(),
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_2,
+            event_type=EventType.SHOT_FIRED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
+            payload=data.test_payload(),
+        )
+    )
+
+    response = client.get(f"/matches/{data.TEST_MATCH_ID_1}/events")
+    events = response.json()
+
+    assert response.status_code == 200
+
+    assert len(events) == 2
+
+    for event in events:
+        assert event["match_id"] == data.TEST_MATCH_ID_1
+
+    assert events[0]["timestamp"] == "2026-01-01T01:01:01Z"
+    assert events[1]["timestamp"] == "2026-01-01T02:01:01Z"
+
+
+def test_get_match_events_returns_404_for_unknown_match() -> None:
+    response = client.get("/matches/not_a_match/events")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Match not found"
+
+
+def test_get_match_events_returns_empty_list_for_match_with_no_events() -> None:
+    create_test_match()
+
+    response = client.get(f"/matches/{data.TEST_MATCH_ID_1}/events")
+    assert response.status_code == 200
+    assert response.json() == []

@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.api.players import create_player
+from app.db.player_repository import create_player
 from app.schemas.players import PlayerCreate
 from tests.db_test_utils import clear_database_tables, create_test_player
 import sample_data as data
@@ -47,6 +47,7 @@ def test_get_player_by_id_returns_created_player() -> None:
 
     assert player["player_id"] == data.TEST_PLAYER_ID_1
     assert player["display_name"] == data.TEST_DISPLAY_NAME_1
+    assert player["created_at"]
 
 
 def test_get_player_by_id_returns_404_for_unknown_player() -> None:

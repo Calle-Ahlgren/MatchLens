@@ -1,8 +1,14 @@
 import pytest
 
 from app.db.connection import get_connection
-from app.db.event_repository import create_event, get_event_by_id, list_events
+from app.db.event_repository import (
+    create_event, get_event_by_id, list_events, list_events_by_match_id, list_player_match_events
+)
+from app.db.match_repository import create_match
+from app.db.player_repository import create_player
 from app.schemas.events import EventType, TelemetryEventCreate
+from app.schemas.matches import MatchCreate
+from app.schemas.players import PlayerCreate
 import sample_data as data
 from tests.db_test_utils import (
     clear_database_tables, create_test_event, create_test_match, create_test_player,
@@ -84,3 +90,122 @@ def test_list_events_returns_created_events_in_time_order() -> None:
 
     assert events[0].timestamp == data.TEST_MATCH_TIMESTAMP_EARLY
     assert events[1].timestamp == data.TEST_MATCH_TIMESTAMP_LATE
+
+
+def test_list_events_by_match_id_returns_only_events_for_that_match() -> None:
+    create_test_match()
+    create_test_player()
+    create_match(
+        MatchCreate(
+            match_id=data.TEST_MATCH_ID_2,
+            started_at=data.TEST_MATCH_TIMESTAMP_EARLY,
+            map_name=data.TEST_MAP,
+            game_mode=data.TEST_MODE,
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.SHOT_FIRED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
+            payload=data.test_payload(),
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.POSITION_UPDATED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
+            payload={"x": 0, "y": 1, "z": 0},
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_2,
+            event_type=EventType.POSITION_UPDATED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
+            payload={"x": 0, "y": 1, "z": 0},
+        )
+    )
+
+    events = list_events_by_match_id(data.TEST_MATCH_ID_1)
+
+    assert len(events) == 2
+
+    for event in events:
+        assert event.match_id == data.TEST_MATCH_ID_1
+
+    assert events[0].timestamp == data.TEST_MATCH_TIMESTAMP_EARLY
+    assert events[1].timestamp == data.TEST_MATCH_TIMESTAMP_LATE
+
+
+def test_list_player_match_events_returns_only_events_for_player_in_match() -> None:
+    create_test_player()
+    create_test_match()
+
+    create_player(
+        PlayerCreate(
+            player_id=data.TEST_PLAYER_ID_2,
+            display_name=data.TEST_DISPLAY_NAME_2
+        )
+    )
+    create_match(
+        MatchCreate(
+            match_id=data.TEST_MATCH_ID_2,
+            started_at=data.TEST_MATCH_TIMESTAMP_EARLY,
+            map_name=data.TEST_MAP,
+            game_mode=data.TEST_MODE
+        )
+    )
+
+    event_late = create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.SHOT_FIRED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
+            payload=data.test_payload(),
+        )
+    )
+
+    event_early = create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.SHOT_FIRED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
+            payload=data.test_payload(),
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.SHOT_FIRED,
+            player_id=data.TEST_PLAYER_ID_2,
+            timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
+            payload=data.test_payload(),
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_2,
+            event_type=EventType.SHOT_FIRED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
+            payload=data.test_payload(),
+        )
+    )
+
+    events = list_player_match_events(data.TEST_MATCH_ID_1, data.TEST_PLAYER_ID_1)
+
+    assert len(events) == 2
+    assert events[0] == event_early
+    assert events[1] == event_late

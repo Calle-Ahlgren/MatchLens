@@ -58,17 +58,11 @@ def get_event_by_id(event_id: str) -> TelemetryEventRead | None:
     )
 
 
-def list_events() -> list[TelemetryEventRead]:
-    query = """
-        SELECT event_id, match_id, event_type, player_id, occurred_at, payload
-        FROM telemetry_events
-        ORDER BY occurred_at
-    """
-
+def _list_query(query: str, params: tuple[object, ...] = ()) -> list[TelemetryEventRead]:
     events = []
 
     with get_connection() as conn:
-        rows = conn.execute(query).fetchall()
+        rows = conn.execute(query, params).fetchall()
 
     for row in rows:
         events.append(
@@ -83,3 +77,34 @@ def list_events() -> list[TelemetryEventRead]:
         )
 
     return events
+
+def list_events() -> list[TelemetryEventRead]:
+    query = """
+        SELECT event_id, match_id, event_type, player_id, occurred_at, payload
+        FROM telemetry_events
+        ORDER BY occurred_at
+    """
+
+    return _list_query(query)
+
+
+def list_events_by_match_id(match_id: str) -> list[TelemetryEventRead]:
+    query = """
+        SELECT event_id, match_id, event_type, player_id, occurred_at, payload
+        FROM telemetry_events
+        WHERE match_id = %s
+        ORDER BY occurred_at
+    """
+
+    return _list_query(query, (match_id,))
+
+
+def list_player_match_events(match_id: str, player_id: str) -> list[TelemetryEventRead]:
+    query = """
+        SELECT event_id, match_id, event_type, player_id, occurred_at, payload
+        FROM telemetry_events
+        WHERE match_id = %s AND player_id = %s
+        ORDER BY occurred_at
+    """
+
+    return _list_query(query, (match_id, player_id))
