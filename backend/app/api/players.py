@@ -1,10 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app.db import player_repository
-from app.db import event_repository
 from app.schemas.players import PlayerCreate, PlayerRead
-from app.schemas.events import TelemetryEventRead
-from app.services.player_stats_service import PlayerMatchStats, compute_player_match_stats
 
 
 router = APIRouter(prefix="/players", tags=["players"])

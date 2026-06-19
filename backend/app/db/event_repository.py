@@ -1,5 +1,4 @@
 # Database repository functions for telemetry events.
-# These are not wired into the API yet.
 
 import uuid
 from psycopg.types.json import Jsonb
