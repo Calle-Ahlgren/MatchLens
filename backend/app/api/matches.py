@@ -2,8 +2,10 @@ from fastapi import APIRouter, HTTPException
 
 from app.db import match_repository
 from app.db import event_repository
+from app.db import player_repository
 from app.schemas.matches import MatchCreate, MatchRead
 from app.schemas.events import TelemetryEventRead
+from app.services.player_stats_service import PlayerMatchStats, get_player_match_stats
 
 
 router = APIRouter(prefix="/matches", tags=["matches"])
@@ -16,6 +18,11 @@ def _get_match_or_404(match_id: str) -> MatchRead:
         raise HTTPException(status_code=404, detail="Match not found")
 
     return match
+
+
+def _ensure_player_exists(player_id: str) -> None:
+    if player_repository.get_player_by_id(player_id) is None:
+        raise HTTPException(status_code=404, detail="Player not found")
 
 
 @router.post("")
@@ -38,3 +45,11 @@ def list_match_events(match_id: str) -> list[TelemetryEventRead]:
     _get_match_or_404(match_id)
 
     return event_repository.list_events_by_match_id(match_id)
+
+
+@router.get("/{match_id}/players/{player_id}/stats")
+def get_match_player_stats(match_id: str, player_id: str) -> PlayerMatchStats:
+    _get_match_or_404(match_id)
+    _ensure_player_exists(player_id)
+
+    return get_player_match_stats(match_id, player_id)
