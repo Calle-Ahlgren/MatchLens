@@ -1,7 +1,7 @@
 import pytest
 
 from app.db.connection import get_connection
-from app.db.player_repository import get_player_by_id
+from app.db.player_repository import get_player_by_id, player_exists
 from tests.db_test_utils import clear_database_tables, create_test_player
 import sample_data as data
 
@@ -47,3 +47,13 @@ def test_get_player_by_id_returns_created_player() -> None:
 
 def test_get_player_by_id_returns_none_for_unknown_player() -> None:
     assert get_player_by_id("-1") is None
+
+
+def test_player_exists_returns_true_for_existing_player() -> None:
+    create_test_player()
+
+    assert player_exists(data.TEST_PLAYER_ID_1)
+
+
+def test_player_exists_returns_false_for_unknown_player() -> None:
+    assert player_exists(data.TEST_PLAYER_ID_1) is False

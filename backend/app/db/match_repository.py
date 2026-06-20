@@ -4,6 +4,21 @@ from app.db.connection import get_connection
 from app.schemas.matches import MatchCreate, MatchRead
 
 
+def match_exists(match_id: str) -> bool:
+    query = """
+        SELECT EXISTS(
+            SELECT 1
+            FROM matches
+            WHERE match_id = %s
+        )
+    """
+
+    with get_connection() as conn:
+        result = conn.execute(query, (match_id,)).fetchone()
+    
+    return result[0]
+
+
 def create_match(match: MatchCreate) -> MatchRead:
     match_insert = """
         INSERT INTO matches (

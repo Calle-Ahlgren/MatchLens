@@ -2,6 +2,21 @@ from app.db.connection import get_connection
 from app.schemas.players import PlayerCreate, PlayerRead
 
 
+def player_exists(player_id: str) -> bool:
+    query = """
+        SELECT EXISTS(
+            SELECT 1
+            FROM players
+            WHERE player_id = %s
+        )
+    """
+
+    with get_connection() as conn:
+        result = conn.execute(query, (player_id,)).fetchone()
+    
+    return result[0]
+
+
 def create_player(player: PlayerCreate) -> PlayerRead:
     player_insert = """
         INSERT INTO players(

@@ -1,7 +1,7 @@
 import pytest
 
 from app.db.connection import get_connection
-from app.db.match_repository import create_match, get_match_by_id, list_matches
+from app.db.match_repository import create_match, get_match_by_id, list_matches, match_exists
 from app.schemas.matches import MatchCreate
 from tests.db_test_utils import clear_database_tables, create_test_match
 import sample_data as data
@@ -68,3 +68,13 @@ def test_list_matches_returns_created_matches_in_start_time_order() -> None:
 
     assert matches[0].started_at == data.TEST_MATCH_TIMESTAMP_EARLY
     assert matches[1].started_at == data.TEST_MATCH_TIMESTAMP_LATE
+
+
+def test_match_exists_returns_true_for_existing_match() -> None:
+    create_test_match()
+
+    assert match_exists(data.TEST_MATCH_ID_1)
+
+
+def test_match_exists_returns_false_for_unknown_match() -> None:
+    assert match_exists(data.TEST_MATCH_ID_1) is False
