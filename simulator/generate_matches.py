@@ -83,8 +83,64 @@ def make_events(match: SimMatch, players: list[SimPlayer]) -> list[SimEvent]:
 
         events += [spawn_event, move_event_1, move_event_2]
 
+    if len(players) >= 2:
+        shot_event = SimEvent(
+            match_id=match.match_id,
+            event_type="shot_fired",
+            player_id=players[0].player_id,
+            timestamp=match.started_at + timedelta(milliseconds=1000),
+            payload={
+                "weapon": "rifle",
+            },
+        )
+
+        hit_event = SimEvent(
+            match_id=match.match_id,
+            event_type="player_hit",
+            player_id=players[0].player_id,
+            timestamp=match.started_at + timedelta(milliseconds=1100),
+            payload={
+                "target_player_id": players[1].player_id,
+                "damage": 100,
+                "weapon": "rifle",
+            },
+        )
+
+        death_event = SimEvent(
+            match_id=match.match_id,
+            event_type="player_death",
+            player_id=players[1].player_id,
+            timestamp=match.started_at + timedelta(milliseconds=1110),
+            payload={
+                "killer_player_id": players[0].player_id,
+                "weapon": "rifle",
+            },
+        )
+
+        kill_event = SimEvent(
+            match_id=match.match_id,
+            event_type="player_killed",
+            player_id=players[0].player_id,
+            timestamp=match.started_at + timedelta(milliseconds=1110),
+            payload={
+                "victim_player_id": players[1].player_id,
+                "weapon": "rifle",
+            },
+        )
+
+        events += [shot_event, hit_event, death_event, kill_event]
+
     events.sort(key=lambda event: event.timestamp)
     return events
+
+
+def summarize_events(events: list[SimEvent]) -> dict[str, int]:
+    event_summary = {}
+
+    for event in events:
+        event_summary[event.event_type] = event_summary.get(event.event_type, 0) + 1
+
+    return event_summary
 
 
 def main() -> None:
@@ -94,10 +150,13 @@ def main() -> None:
 
     events = make_events(match, players)
 
+    event_summary = summarize_events(events)
+
     output = {
         "match": asdict(match),
         "players": [asdict(player) for player in players],
         "events": [asdict(event) for event in events],
+        "event summary": event_summary
     }
 
     print(json.dumps(output, indent=2, default=str))
