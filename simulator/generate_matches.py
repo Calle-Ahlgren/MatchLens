@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 import json
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+OUTPUT_DIR = SCRIPT_DIR / "output"
+OUTPUT_PATH = OUTPUT_DIR / "sample_match.json"
 
 
 @dataclass(frozen=True)
@@ -143,6 +149,13 @@ def summarize_events(events: list[SimEvent]) -> dict[str, int]:
     return event_summary
 
 
+def write_match_data(output: dict[str, object]) -> None:
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    output_json = json.dumps(output, indent=2, default=str)
+    OUTPUT_PATH.write_text(output_json, encoding="utf-8")
+
+
 def main() -> None:
     players = make_players(4)
 
@@ -156,10 +169,18 @@ def main() -> None:
         "match": asdict(match),
         "players": [asdict(player) for player in players],
         "events": [asdict(event) for event in events],
-        "event summary": event_summary
+        "event_summary": event_summary
     }
 
-    print(json.dumps(output, indent=2, default=str))
+    write_match_data(output)
+
+    print("Generated sample match data.")
+    print(f"Output file: {OUTPUT_PATH}")
+    print(f"Total events: {len(events)}")
+    print("Event summary:")
+
+    for event_type, count in event_summary.items():
+        print(f"  {event_type}: {count}")
 
 
 if __name__ == "__main__":

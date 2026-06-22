@@ -23,3 +23,6 @@ build/
 *.sqlite
 *.jsonl
 data/
+
+# Simulator generated output
+simulator/output/
