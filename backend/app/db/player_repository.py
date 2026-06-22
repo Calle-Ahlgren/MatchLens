@@ -13,7 +13,7 @@ def player_exists(player_id: str) -> bool:
 
     with get_connection() as conn:
         result = conn.execute(query, (player_id,)).fetchone()
-    
+
     return result[0]
 
 

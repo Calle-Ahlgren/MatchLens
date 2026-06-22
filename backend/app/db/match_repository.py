@@ -15,7 +15,7 @@ def match_exists(match_id: str) -> bool:
 
     with get_connection() as conn:
         result = conn.execute(query, (match_id,)).fetchone()
-    
+
     return result[0]
 
 

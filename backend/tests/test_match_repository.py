@@ -1,7 +1,12 @@
 import pytest
 
 from app.db.connection import get_connection
-from app.db.match_repository import create_match, get_match_by_id, list_matches, match_exists
+from app.db.match_repository import (
+    create_match,
+    get_match_by_id,
+    list_matches,
+    match_exists,
+)
 from app.schemas.matches import MatchCreate
 from tests.db_test_utils import clear_database_tables, create_test_match
 import sample_data as data

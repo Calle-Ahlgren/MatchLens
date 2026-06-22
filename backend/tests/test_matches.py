@@ -12,7 +12,7 @@ from tests.db_test_utils import (
     clear_database_tables,
     create_test_match,
     create_test_player,
-    create_test_event
+    create_test_event,
 )
 import sample_data as data
 
@@ -258,9 +258,7 @@ def test_get_match_player_stats_returns_computed_stats() -> None:
 def test_get_match_player_stats_returns_404_for_unknown_player() -> None:
     create_test_match()
 
-    response = client.get(
-        f"/matches/{data.TEST_MATCH_ID_1}/players/not_a_player/stats"
-    )
+    response = client.get(f"/matches/{data.TEST_MATCH_ID_1}/players/not_a_player/stats")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Player not found"
