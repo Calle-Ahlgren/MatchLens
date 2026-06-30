@@ -15,5 +15,4 @@ TEST_MODE = "mode_001"
 def test_payload() -> dict[str, object]:
     return {
         "weapon": "rifle",
-        "damage": 34,
     }

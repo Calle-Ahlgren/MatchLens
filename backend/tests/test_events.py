@@ -103,6 +103,253 @@ def test_create_event_rejects_invalid_timestamp() -> None:
     assert response.status_code == 422
 
 
+def test_create_event_rejects_player_spawned_missing_x() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_spawned",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"y": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'x'" in str(response.json())
+
+
+def test_create_event_rejects_player_spawned_missing_y() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_spawned",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"x": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'y'" in str(response.json())
+
+
+def test_create_event_rejects_position_updated_missing_x() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "position_updated",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"y": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'x'" in str(response.json())
+
+
+def test_create_event_rejects_position_updated_missing_y() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "position_updated",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"x": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'y'" in str(response.json())
+
+
+def test_create_event_rejects_shot_fired_missing_weapon() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "shot_fired",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'weapon'" in str(response.json())
+
+
+def test_create_event_rejects_player_hit_missing_target_player_id() -> None:
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_hit",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {
+            "damage": 34,
+            "weapon": "rifle",
+        },
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'target_player_id'" in str(response.json())
+
+
+def test_create_event_rejects_player_hit_missing_damage() -> None:
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_hit",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {
+            "target_player_id": "player_002",
+            "weapon": "rifle",
+        },
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'damage'" in str(response.json())
+
+
+def test_create_event_rejects_player_hit_missing_weapon() -> None:
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_hit",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {
+            "target_player_id": "player_002",
+            "damage": 34,
+        },
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'weapon'" in str(response.json())
+
+
+def test_create_event_rejects_player_killed_missing_victim_player_id() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_killed",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"weapon": "rifle"},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'victim_player_id'" in str(response.json())
+
+
+def test_create_event_rejects_player_killed_missing_weapon() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_killed",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"victim_player_id": "player_002"},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'weapon'" in str(response.json())
+
+
+def test_create_event_rejects_player_death_missing_killer_player_id() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_death",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"weapon": "rifle", "x": 0, "y": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'killer_player_id'" in str(response.json())
+
+
+def test_create_event_rejects_player_death_missing_weapon() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_death",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"killer_player_id": "player_002", "x": 0, "y": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'weapon'" in str(response.json())
+
+
+def test_create_event_rejects_player_death_missing_x() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_death",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"killer_player_id": "player_002", "weapon": "rifle", "y": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'x'" in str(response.json())
+
+
+def test_create_event_rejects_player_death_missing_y() -> None:    
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": "player_death",
+        "player_id": "player_001",
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": {"killer_player_id": "player_002", "weapon": "rifle", "x": 0},
+    }
+
+    response = client.post("/events", json=event)
+
+    assert response.status_code == 422
+    assert "'y'" in str(response.json())
+
+
 def test_list_events_returns_created_events() -> None:
     create_required_event_parents()
 

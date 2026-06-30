@@ -121,6 +121,8 @@ def make_events(match: SimMatch, players: list[SimPlayer]) -> list[SimEvent]:
             payload={
                 "killer_player_id": players[0].player_id,
                 "weapon": "rifle",
+                "x": 10,
+                "y": 20,
             },
         )
 

@@ -9,6 +9,7 @@ from generate_matches import (
 
 from api_client import post_json
 
+
 def upload_sample_match() -> None:
     players = make_players(4)
 

@@ -198,7 +198,11 @@ def test_get_match_player_stats_returns_computed_stats() -> None:
             event_type=EventType.PLAYER_HIT,
             player_id=data.TEST_PLAYER_ID_1,
             timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
-            payload={"target_player_id": data.TEST_PLAYER_ID_2},
+            payload={
+                "target_player_id": data.TEST_PLAYER_ID_2,
+                "damage": 34,
+                "weapon": "rifle",
+            },
         )
     )
 
@@ -208,7 +212,10 @@ def test_get_match_player_stats_returns_computed_stats() -> None:
             event_type=EventType.PLAYER_KILLED,
             player_id=data.TEST_PLAYER_ID_1,
             timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
-            payload={"victim_player_id": data.TEST_PLAYER_ID_2},
+            payload={
+                "victim_player_id": data.TEST_PLAYER_ID_2,
+                "weapon": "rifle",
+            },
         )
     )
 
@@ -218,7 +225,12 @@ def test_get_match_player_stats_returns_computed_stats() -> None:
             event_type=EventType.PLAYER_DEATH,
             player_id=data.TEST_PLAYER_ID_1,
             timestamp=data.TEST_MATCH_TIMESTAMP_LATE,
-            payload={"x": 0, "y": 0, "z": 1, "killer_player_id": data.TEST_PLAYER_ID_2},
+            payload={
+                "killer_player_id": data.TEST_PLAYER_ID_2,
+                "weapon": "rifle",
+                "x": 0, 
+                "y": 0, 
+            },
         )
     )
 

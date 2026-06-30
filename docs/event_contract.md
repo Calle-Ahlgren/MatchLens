@@ -294,11 +294,14 @@ Required payload fields:
 ```text
 killer_player_id: string
 weapon: string
+x: number
+y: number
 ```
 
 Optional payload fields:
 
 ```text
+z: number
 damage: number
 death_cause: string
 ```
