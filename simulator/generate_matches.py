@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -40,7 +41,7 @@ def make_players(count: int) -> list[SimPlayer]:
 
     for idx in range(count):
         player = SimPlayer(
-            player_id=f"player_{idx + 1:03}",
+            player_id=f"player_{uuid.uuid4().hex[:8]}",
             display_name=f"Player {idx + 1}",
         )
         players.append(player)
@@ -50,7 +51,7 @@ def make_players(count: int) -> list[SimPlayer]:
 
 def make_match() -> SimMatch:
     match = SimMatch(
-        match_id="match_001",
+        match_id=f"match_{uuid.uuid4().hex[:8]}",
         started_at=datetime(2026, 1, 1, 1, 1, 1, tzinfo=UTC),
         map_name="Training Arena",
         game_mode="deathmatch",
@@ -149,10 +150,30 @@ def summarize_events(events: list[SimEvent]) -> dict[str, int]:
     return event_summary
 
 
+def datetime_to_api_string(value: datetime) -> str:
+    return value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def event_to_api_dict(event: SimEvent) -> dict[str, object]:
+    event_dict = asdict(event)
+    event_dict["timestamp"] = datetime_to_api_string(event.timestamp)
+    return event_dict
+
+
+def match_to_api_dict(match: SimMatch) -> dict[str, object]:
+    match_dict = asdict(match)
+    match_dict["started_at"] = datetime_to_api_string(match.started_at)
+    return match_dict
+
+
+def player_to_api_dict(player: SimPlayer) -> dict[str, object]:
+    return asdict(player)
+
+
 def write_match_data(output: dict[str, object]) -> None:
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    output_json = json.dumps(output, indent=2, default=str)
+    output_json = json.dumps(output, indent=2)
     OUTPUT_PATH.write_text(output_json, encoding="utf-8")
 
 
@@ -166,10 +187,10 @@ def main() -> None:
     event_summary = summarize_events(events)
 
     output = {
-        "match": asdict(match),
-        "players": [asdict(player) for player in players],
-        "events": [asdict(event) for event in events],
-        "event_summary": event_summary
+        "match": match_to_api_dict(match),
+        "players": [player_to_api_dict(player) for player in players],
+        "events": [event_to_api_dict(event) for event in events],
+        "event_summary": event_summary,
     }
 
     write_match_data(output)
