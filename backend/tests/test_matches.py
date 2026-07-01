@@ -228,8 +228,8 @@ def test_get_match_player_stats_returns_computed_stats() -> None:
             payload={
                 "killer_player_id": data.TEST_PLAYER_ID_2,
                 "weapon": "rifle",
-                "x": 0, 
-                "y": 0, 
+                "x": 0,
+                "y": 0,
             },
         )
     )

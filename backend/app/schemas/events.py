@@ -14,17 +14,9 @@ class EventType(StrEnum):
     PLAYER_DEATH = "player_death"
 
 
-REQUIRED_PAYLOAD_FIELDS: dict[EventType, set[str]] = {
-    EventType.PLAYER_SPAWNED: {"x", "y"},
-    EventType.POSITION_UPDATED: {"x", "y"},
-    EventType.SHOT_FIRED: {"weapon"},
-    EventType.PLAYER_HIT: {"target_player_id", "damage", "weapon"},
-    EventType.PLAYER_KILLED: {"victim_player_id", "weapon"},
-    EventType.PLAYER_DEATH: {"killer_player_id", "weapon", "x", "y"},
-}
-
-
-REQUIRED_PAYLOAD_FIELDS_AND_TYPES: dict[EventType, dict[str, type | tuple[type, ...]]] = {
+REQUIRED_PAYLOAD_FIELDS_AND_TYPES: dict[
+    EventType, dict[str, type | tuple[type, ...]]
+] = {
     EventType.PLAYER_SPAWNED: {
         "x": (int, float),
         "y": (int, float),
@@ -71,13 +63,17 @@ class TelemetryEventCreate(BaseModel):
         missing_fields = required_fields - payload_fields
 
         if missing_fields:
-            raise ValueError(f"Missing required payload fields: {sorted(missing_fields)}")
-        
+            raise ValueError(
+                f"Missing required payload fields: {sorted(missing_fields)}"
+            )
+
         for field_name, expected_type in field_types.items():
             value = self.payload[field_name]
 
             if expected_type == (int, float):
-                is_valid = isinstance(value, (int, float)) and not isinstance(value, bool)
+                is_valid = isinstance(value, (int, float)) and not isinstance(
+                    value, bool
+                )
             else:
                 is_valid = isinstance(value, expected_type)
 
