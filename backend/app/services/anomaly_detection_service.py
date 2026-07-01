@@ -5,6 +5,9 @@ import math
 from app.schemas.events import EventType, TelemetryEventRead
 
 
+DEFAULT_MAX_SPEED_UNITS_PER_SECOND = 20.0
+
+
 class AnomalyType(StrEnum):
     IMPOSSIBLE_MOVEMENT = "impossible_movement"
 
@@ -94,5 +97,16 @@ def detect_impossible_movement(
             )
 
         previous_events_by_player[f"{player_id}"] = current_event
+
+    return anomalies
+
+
+def detect_anomalies(
+    events: list[TelemetryEventRead],
+    max_speed_units_per_second: float = DEFAULT_MAX_SPEED_UNITS_PER_SECOND,
+) -> list[AnomalyFlag]:
+    anomalies: list[AnomalyFlag] = []
+
+    anomalies += detect_impossible_movement(events, max_speed_units_per_second)
 
     return anomalies

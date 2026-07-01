@@ -108,3 +108,56 @@ def test_detect_impossible_movement_does_not_compare_different_players() -> None
     )
 
     assert anomalies == []
+
+
+def test_detect_impossible_movement_returns_multiple_anomalies() -> None:
+    events = [
+        make_position_event("event_001", TIMESTAMP, 0, 0),
+        make_position_event(
+            "event_002",
+            TIMESTAMP + timedelta(seconds=1),
+            30,
+            40,
+            player_id="player_001",
+        ),
+        make_position_event(
+            "event_003",
+            TIMESTAMP + timedelta(seconds=2),
+            60,
+            80,
+            player_id="player_001",
+        ),
+    ]
+
+    anomalies = detect_impossible_movement(
+        events,
+        max_speed_units_per_second=20,
+    )
+
+    assert len(anomalies) == 2
+
+    assert anomalies[0].event_id == "event_002"
+    assert anomalies[1].event_id == "event_003"
+    assert anomalies[0].anomaly_type == AnomalyType.IMPOSSIBLE_MOVEMENT
+    assert anomalies[1].anomaly_type == AnomalyType.IMPOSSIBLE_MOVEMENT
+
+
+def test_detect_impossible_movement_handles_unsorted_events() -> None:
+    events = [
+        make_position_event(
+            "event_002",
+            TIMESTAMP + timedelta(seconds=1),
+            30,
+            40,
+            player_id="player_001",
+        ),
+        make_position_event("event_001", TIMESTAMP, 0, 0),
+    ]
+
+    anomalies = detect_impossible_movement(
+        events,
+        max_speed_units_per_second=20,
+    )
+
+    assert len(anomalies) == 1
+    assert anomalies[0].event_id == "event_002"
