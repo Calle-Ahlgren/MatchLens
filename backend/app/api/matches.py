@@ -6,6 +6,7 @@ from app.db import player_repository
 from app.schemas.matches import MatchCreate, MatchRead
 from app.schemas.events import TelemetryEventRead
 from app.services.player_stats_service import PlayerMatchStats, get_player_match_stats
+from app.services.anomaly_detection_service import AnomalyFlag, detect_anomalies
 
 
 router = APIRouter(prefix="/matches", tags=["matches"])
@@ -58,3 +59,12 @@ def get_match_player_stats(match_id: str, player_id: str) -> PlayerMatchStats:
     _ensure_player_exists(player_id)
 
     return get_player_match_stats(match_id, player_id)
+
+
+@router.get("/{match_id}/anomalies")
+def get_match_anomalies(match_id: str) -> list[AnomalyFlag]:
+    _ensure_match_exists(match_id)
+
+    events = event_repository.list_events_by_match_id(match_id)
+
+    return detect_anomalies(events)

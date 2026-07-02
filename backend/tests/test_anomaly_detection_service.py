@@ -5,6 +5,7 @@ from app.services.anomaly_detection_service import (
     AnomalySeverity,
     AnomalyType,
     detect_impossible_movement,
+    detect_high_accuracy,
 )
 
 
@@ -27,6 +28,31 @@ def make_position_event(
             "x": x,
             "y": y,
         },
+        event_id=event_id,
+    )
+
+
+def make_combat_event(
+    event_id: str,
+    event_type: EventType,
+    timestamp: datetime,
+    player_id: str = "player_001",
+) -> TelemetryEventRead:
+    if event_type == EventType.SHOT_FIRED:
+        payload = {"weapon": "rifle"}
+    elif event_type == EventType.PLAYER_HIT:
+        payload = {
+            "target_player_id": "player_002",
+            "damage": 34,
+            "weapon": "rifle",
+        }
+
+    return TelemetryEventRead(
+        match_id="match_001",
+        event_type=event_type,
+        player_id=player_id,
+        timestamp=timestamp,
+        payload=payload,
         event_id=event_id,
     )
 
@@ -161,3 +187,38 @@ def test_detect_impossible_movement_handles_unsorted_events() -> None:
 
     assert len(anomalies) == 1
     assert anomalies[0].event_id == "event_002"
+
+
+def test_detect_high_accuracy_flags_player_with_unusually_high_accuracy() -> None:
+    events = []
+
+    for idx in range(10):
+        event = make_combat_event(
+            event_id=f"shot_{idx}",
+            event_type=EventType.SHOT_FIRED,
+            timestamp=TIMESTAMP + timedelta(seconds=idx),
+        )
+        events.append(event)
+        if idx < 9:
+            event = make_combat_event(
+                event_id=f"hit_{idx}",
+                event_type=EventType.PLAYER_HIT,
+                timestamp=TIMESTAMP + timedelta(seconds=1 + idx),
+            )
+            events.append(event)
+
+    anomalies = detect_high_accuracy(
+        events,
+        min_shots=10,
+        accuracy_threshold=0.8,
+    )
+
+    assert len(anomalies) == 1
+
+    anomaly = anomalies[0]
+
+    assert anomaly.match_id == "match_001"
+    assert anomaly.player_id == "player_001"
+    assert anomaly.anomaly_type == AnomalyType.HIGH_ACCURACY
+    assert anomaly.severity == AnomalySeverity.MEDIUM
+    assert "accuracy" in anomaly.description.lower()

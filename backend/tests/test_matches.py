@@ -1,4 +1,5 @@
 import pytest
+from datetime import timedelta
 from fastapi.testclient import TestClient
 
 from app.db.match_repository import create_match
@@ -295,3 +296,81 @@ def test_get_match_player_stats_returns_zero_stats_for_player_with_no_events() -
     assert stats["kills"] == 0
     assert stats["deaths"] == 0
     assert stats["accuracy"] == 0.0
+
+
+def test_get_match_anomalies_returns_impossible_movement_flags() -> None:
+    create_test_match()
+    create_test_player()
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.POSITION_UPDATED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
+            payload={"x": 0, "y": 0},
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.POSITION_UPDATED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY + timedelta(seconds=1),
+            payload={"x": 30, "y": 40},
+        )
+    )
+
+    response = client.get(f"/matches/{data.TEST_MATCH_ID_1}/anomalies")
+
+    assert response.status_code == 200
+
+    response_json = response.json()
+
+    assert len(response_json) == 1
+
+    anomaly = response_json[0]
+
+    assert anomaly["match_id"] == data.TEST_MATCH_ID_1
+    assert anomaly["player_id"] == data.TEST_PLAYER_ID_1
+    assert anomaly["anomaly_type"] == "impossible_movement"
+    assert anomaly["severity"] == "high"
+    assert "speed" in anomaly["description"].lower()
+
+
+def test_get_match_anomalies_returns_404_for_unknown_match() -> None:
+    response = client.get("/matches/unknown_match/anomalies")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Match not found"
+
+
+def test_get_match_anomalies_returns_empty_list_for_normal_movement() -> None:
+    create_test_match()
+    create_test_player()
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.POSITION_UPDATED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY,
+            payload={"x": 0, "y": 0},
+        )
+    )
+
+    create_event(
+        TelemetryEventCreate(
+            match_id=data.TEST_MATCH_ID_1,
+            event_type=EventType.POSITION_UPDATED,
+            player_id=data.TEST_PLAYER_ID_1,
+            timestamp=data.TEST_MATCH_TIMESTAMP_EARLY + timedelta(seconds=1),
+            payload={"x": 3, "y": 4},
+        )
+    )
+
+    response = client.get(f"/matches/{data.TEST_MATCH_ID_1}/anomalies")
+
+    assert response.status_code == 200
+    assert response.json() == []

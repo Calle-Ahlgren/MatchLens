@@ -10,6 +10,7 @@ DEFAULT_MAX_SPEED_UNITS_PER_SECOND = 20.0
 
 class AnomalyType(StrEnum):
     IMPOSSIBLE_MOVEMENT = "impossible_movement"
+    HIGH_ACCURACY = "high_accuracy"
 
 
 class AnomalySeverity(StrEnum):
@@ -22,7 +23,7 @@ class AnomalySeverity(StrEnum):
 class AnomalyFlag:
     match_id: str
     player_id: str
-    event_id: str
+    event_id: str | None
     anomaly_type: AnomalyType
     severity: AnomalySeverity
     description: str
@@ -88,7 +89,7 @@ def detect_impossible_movement(
             anomalies.append(
                 AnomalyFlag(
                     match_id=current_event.match_id,
-                    player_id=current_event.player_id or "",
+                    player_id=current_event.player_id,
                     event_id=current_event.event_id,
                     anomaly_type=AnomalyType.IMPOSSIBLE_MOVEMENT,
                     severity=AnomalySeverity.HIGH,
@@ -97,6 +98,52 @@ def detect_impossible_movement(
             )
 
         previous_events_by_player[f"{player_id}"] = current_event
+
+    return anomalies
+
+
+def detect_high_accuracy(
+    events: list[TelemetryEventRead],
+    min_shots: int,
+    accuracy_threshold: float,
+) -> list[AnomalyFlag]:
+    anomalies: list[AnomalyFlag] = []
+
+    if events == []:
+        return anomalies
+
+    match_id = events[0].match_id
+
+    shots_by_player: dict[str, int] = {}
+    hits_by_player: dict[str, int] = {}
+
+    for event in events:
+        player_id = event.player_id
+
+        if event.event_type == EventType.SHOT_FIRED:
+            shots_by_player[player_id] = shots_by_player.get(player_id, 0) + 1
+        elif event.event_type == EventType.PLAYER_HIT:
+            hits_by_player[player_id] = hits_by_player.get(player_id, 0) + 1
+
+    for player, shots in shots_by_player.items():
+        if shots >= min_shots:
+            hits = hits_by_player.get(player, 0)
+            accuracy = hits / shots
+            if accuracy > accuracy_threshold:
+                anomalies.append(
+                    AnomalyFlag(
+                        match_id=match_id,
+                        player_id=player,
+                        event_id=None,
+                        anomaly_type=AnomalyType.HIGH_ACCURACY,
+                        severity=AnomalySeverity.MEDIUM,
+                        description=(
+                            f"Unusually high accuracy detected: {hits} hits from "
+                            f"{shots} shots = {accuracy * 100:.2f}%, threshold "
+                            f"{accuracy_threshold * 100:.2f}%"
+                        ),
+                    )
+                )
 
     return anomalies
 

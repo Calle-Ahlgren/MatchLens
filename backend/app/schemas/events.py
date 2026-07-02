@@ -14,6 +14,16 @@ class EventType(StrEnum):
     PLAYER_DEATH = "player_death"
 
 
+PLAYER_OWNED_EVENT_TYPES = {
+    EventType.PLAYER_SPAWNED,
+    EventType.POSITION_UPDATED,
+    EventType.SHOT_FIRED,
+    EventType.PLAYER_HIT,
+    EventType.PLAYER_KILLED,
+    EventType.PLAYER_DEATH,
+}
+
+
 REQUIRED_PAYLOAD_FIELDS_AND_TYPES: dict[
     EventType, dict[str, type | tuple[type, ...]]
 ] = {
@@ -54,7 +64,10 @@ class TelemetryEventCreate(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def validate_payload_for_event_type(self) -> "TelemetryEventCreate":
+    def validate_event_contract(self) -> "TelemetryEventCreate":
+        if self.event_type in PLAYER_OWNED_EVENT_TYPES and self.player_id is None:
+            raise ValueError("player_id is required for this event type")
+
         field_types = REQUIRED_PAYLOAD_FIELDS_AND_TYPES.get(self.event_type, {})
 
         required_fields = set(field_types.keys())

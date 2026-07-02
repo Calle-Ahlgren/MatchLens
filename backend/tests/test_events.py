@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.schemas.events import EventType
 from tests.db_test_utils import (
     clear_database_tables,
     create_test_match,
@@ -32,6 +33,34 @@ def assert_validation_error_mentions(response, expected_text: str) -> None:
     messages = [error["msg"] for error in response.json()["detail"]]
 
     assert any(expected_text in message for message in messages), messages
+
+
+def valid_payload_for_event_type(event_type: str) -> dict[str, object]:
+    payload = {}
+    match event_type:
+        case EventType.PLAYER_SPAWNED:
+            payload = {"x": 0, "y": 0}
+        case EventType.POSITION_UPDATED:
+            payload = {"x": 10, "y": 20}
+        case EventType.SHOT_FIRED:
+            payload = {"weapon": "rifle"}
+        case EventType.PLAYER_HIT:
+            payload = {
+                "target_player_id": "player_002",
+                "damage": 34,
+                "weapon": "rifle",
+            }
+        case EventType.PLAYER_KILLED:
+            payload = {"victim_player_id": "player_002", "weapon": "rifle"}
+        case EventType.PLAYER_DEATH:
+            payload = {
+                "killer_player_id": "player_002",
+                "weapon": "rifle",
+                "x": 0,
+                "y": 0,
+            }
+
+    return payload
 
 
 def test_create_event_accepts_valid_event() -> None:
@@ -559,3 +588,31 @@ def test_get_event_by_id_returns_404_for_unknown_event() -> None:
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Event not found"
+
+
+@pytest.mark.parametrize(
+    "event_type",
+    [
+        "player_spawned",
+        "position_updated",
+        "shot_fired",
+        "player_hit",
+        "player_killed",
+        "player_death",
+    ],
+)
+def test_create_event_rejects_missing_player_id_for_player_owned_events(
+    event_type: str,
+) -> None:
+    create_required_event_parents()
+
+    event = {
+        "match_id": "match_001",
+        "event_type": event_type,
+        "timestamp": "2026-06-02T18:30:00Z",
+        "payload": valid_payload_for_event_type(event_type),
+    }
+
+    response = client.post("/events", json=event)
+
+    assert_validation_error_mentions(response, "player_id")
