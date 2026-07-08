@@ -6,6 +6,8 @@ from app.services.anomaly_detection_service import (
     AnomalyType,
     detect_impossible_movement,
     detect_high_accuracy,
+    detect_suspicious_fire_rate,
+    detect_anomalies,
 )
 
 
@@ -222,3 +224,136 @@ def test_detect_high_accuracy_flags_player_with_unusually_high_accuracy() -> Non
     assert anomaly.anomaly_type == AnomalyType.HIGH_ACCURACY
     assert anomaly.severity == AnomalySeverity.MEDIUM
     assert "accuracy" in anomaly.description.lower()
+
+
+def test_detect_high_accuracy_does_not_flag_below_minimum_shots() -> None:
+    events = []
+
+    for idx in range(9):
+        event = make_combat_event(
+            event_id=f"shot_{idx}",
+            event_type=EventType.SHOT_FIRED,
+            timestamp=TIMESTAMP + timedelta(seconds=idx),
+        )
+        events.append(event)
+        event = make_combat_event(
+            event_id=f"hit_{idx}",
+            event_type=EventType.PLAYER_HIT,
+            timestamp=TIMESTAMP + timedelta(seconds=1 + idx),
+        )
+        events.append(event)
+
+    anomalies = detect_high_accuracy(
+        events,
+        min_shots=10,
+        accuracy_threshold=0.8,
+    )
+
+    assert anomalies == []
+
+
+def test_detect_high_accuracy_does_not_flag_accuracy_equal_to_threshold() -> None:
+    events = []
+
+    for idx in range(10):
+        event = make_combat_event(
+            event_id=f"shot_{idx}",
+            event_type=EventType.SHOT_FIRED,
+            timestamp=TIMESTAMP + timedelta(seconds=idx),
+        )
+        events.append(event)
+        if idx < 8:
+            event = make_combat_event(
+                event_id=f"hit_{idx}",
+                event_type=EventType.PLAYER_HIT,
+                timestamp=TIMESTAMP + timedelta(seconds=1 + idx),
+            )
+            events.append(event)
+
+    anomalies = detect_high_accuracy(
+        events,
+        min_shots=10,
+        accuracy_threshold=0.8,
+    )
+
+    assert anomalies == []
+
+
+def test_detect_anomalies_returns_multiple_anomaly_types() -> None:
+    events = [
+        make_position_event("event_001", TIMESTAMP, 0, 0),
+        make_position_event("event_002", TIMESTAMP + timedelta(seconds=1), 30, 40),
+    ]
+
+    for idx in range(10):
+        event = make_combat_event(
+            event_id=f"shot_{idx}",
+            event_type=EventType.SHOT_FIRED,
+            timestamp=TIMESTAMP + timedelta(seconds=idx),
+        )
+        events.append(event)
+        if idx < 9:
+            event = make_combat_event(
+                event_id=f"hit_{idx}",
+                event_type=EventType.PLAYER_HIT,
+                timestamp=TIMESTAMP + timedelta(seconds=1 + idx),
+            )
+            events.append(event)
+
+    anomalies = detect_anomalies(
+        events,
+        max_speed_units_per_second=20,
+        min_shots_for_high_accuracy=10,
+        high_accuracy_threshold=0.8,
+    )
+
+    assert len(anomalies) == 2
+
+    anomaly_types = {anomaly.anomaly_type for anomaly in anomalies}
+
+    assert AnomalyType.IMPOSSIBLE_MOVEMENT in anomaly_types
+    assert AnomalyType.HIGH_ACCURACY in anomaly_types
+
+    movement_anomaly = next(
+        anomaly
+        for anomaly in anomalies
+        if anomaly.anomaly_type == AnomalyType.IMPOSSIBLE_MOVEMENT
+    )
+
+    accuracy_anomaly = next(
+        anomaly
+        for anomaly in anomalies
+        if anomaly.anomaly_type == AnomalyType.HIGH_ACCURACY
+    )
+
+    assert movement_anomaly.event_id == "event_002"
+    assert accuracy_anomaly.event_id is None
+
+
+def test_detect_suspicious_fire_rate_flags_shots_too_close_together() -> None:
+    events = [
+        make_combat_event(
+            event_id="event_001", event_type=EventType.SHOT_FIRED, timestamp=TIMESTAMP
+        ),
+        make_combat_event(
+            event_id="event_002",
+            event_type=EventType.SHOT_FIRED,
+            timestamp=TIMESTAMP + timedelta(milliseconds=50),
+        ),
+    ]
+
+    anomalies = detect_suspicious_fire_rate(
+        events,
+        min_shot_interval_seconds_by_weapon={"rifle": 0.2},
+    )
+
+    assert len(anomalies) == 1
+
+    anomaly = anomalies[0]
+
+    assert anomaly.match_id == "match_001"
+    assert anomaly.player_id == "player_001"
+    assert anomaly.event_id == "event_002"
+    assert anomaly.anomaly_type == AnomalyType.SUSPICIOUS_FIRE_RATE
+    assert anomaly.severity == AnomalySeverity.HIGH
+    assert "fire rate" in anomaly.description.lower()

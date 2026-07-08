@@ -6,11 +6,15 @@ from app.schemas.events import EventType, TelemetryEventRead
 
 
 DEFAULT_MAX_SPEED_UNITS_PER_SECOND = 20.0
+DEFAULT_MIN_SHOTS_FOR_HIGH_ACCURACY = 10
+DEFAULT_HIGH_ACCURACY_THRESHOLD = 0.8
+DEFAULT_MIN_SHOT_INTERVAL_SECONDS_BY_WEAPON = {"rifle": 0.2}
 
 
 class AnomalyType(StrEnum):
     IMPOSSIBLE_MOVEMENT = "impossible_movement"
     HIGH_ACCURACY = "high_accuracy"
+    SUSPICIOUS_FIRE_RATE = "suspicious_fire_rate"
 
 
 class AnomalySeverity(StrEnum):
@@ -148,12 +152,73 @@ def detect_high_accuracy(
     return anomalies
 
 
+def detect_suspicious_fire_rate(
+    events: list[TelemetryEventRead],
+    min_shot_interval_seconds_by_weapon: dict[str, float],
+) -> list[AnomalyFlag]:
+    anomalies: list[AnomalyFlag] = []
+
+    events = [event for event in events if event.event_type == EventType.SHOT_FIRED]
+
+    events.sort(key=lambda event: event.timestamp)
+
+    previous_shot_by_player_and_weapon: dict[tuple[str, str], TelemetryEventRead] = {}
+
+    for current_event in events:
+        player_id = current_event.player_id
+        weapon = current_event.payload["weapon"]
+        if weapon not in min_shot_interval_seconds_by_weapon:
+            continue
+
+        previous_event = previous_shot_by_player_and_weapon.get((player_id, weapon))
+
+        if previous_event is None:
+            previous_shot_by_player_and_weapon[(player_id, weapon)] = current_event
+            continue
+
+        min_shot_interval = min_shot_interval_seconds_by_weapon[weapon]
+
+        time_delta = current_event.timestamp - previous_event.timestamp
+        shot_interval = time_delta.total_seconds()
+
+        if shot_interval < min_shot_interval:
+            anomalies.append(
+                AnomalyFlag(
+                    match_id=current_event.match_id,
+                    player_id=current_event.player_id,
+                    event_id=current_event.event_id,
+                    anomaly_type=AnomalyType.SUSPICIOUS_FIRE_RATE,
+                    severity=AnomalySeverity.HIGH,
+                    description=(
+                        f"Suspicious fire rate: weapon '{weapon}' fired after "
+                        f"{shot_interval:.3f}s, below minimum interval "
+                        f"{min_shot_interval:.3f}s"
+                    ),
+                )
+            )
+
+        previous_shot_by_player_and_weapon[(player_id, weapon)] = current_event
+
+    return anomalies
+
+
 def detect_anomalies(
     events: list[TelemetryEventRead],
     max_speed_units_per_second: float = DEFAULT_MAX_SPEED_UNITS_PER_SECOND,
+    min_shots_for_high_accuracy: int = DEFAULT_MIN_SHOTS_FOR_HIGH_ACCURACY,
+    high_accuracy_threshold: float = DEFAULT_HIGH_ACCURACY_THRESHOLD,
+    min_shot_interval_seconds_by_weapon: dict[
+        str, float
+    ] = DEFAULT_MIN_SHOT_INTERVAL_SECONDS_BY_WEAPON,
 ) -> list[AnomalyFlag]:
     anomalies: list[AnomalyFlag] = []
 
     anomalies += detect_impossible_movement(events, max_speed_units_per_second)
+    anomalies += detect_high_accuracy(
+        events, min_shots_for_high_accuracy, high_accuracy_threshold
+    )
+    anomalies += detect_suspicious_fire_rate(
+        events, min_shot_interval_seconds_by_weapon
+    )
 
     return anomalies

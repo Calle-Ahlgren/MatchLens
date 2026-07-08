@@ -374,3 +374,50 @@ def test_get_match_anomalies_returns_empty_list_for_normal_movement() -> None:
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_get_match_anomalies_returns_high_accuracy_flags() -> None:
+    create_test_match()
+    create_test_player()
+
+    for idx in range(10):
+        create_event(
+            TelemetryEventCreate(
+                match_id=data.TEST_MATCH_ID_1,
+                event_type=EventType.SHOT_FIRED,
+                player_id=data.TEST_PLAYER_ID_1,
+                timestamp=data.TEST_MATCH_TIMESTAMP_EARLY + timedelta(seconds=idx),
+                payload=data.test_payload(),
+            )
+        )
+        if idx < 9:
+            create_event(
+                TelemetryEventCreate(
+                    match_id=data.TEST_MATCH_ID_1,
+                    event_type=EventType.PLAYER_HIT,
+                    player_id=data.TEST_PLAYER_ID_1,
+                    timestamp=data.TEST_MATCH_TIMESTAMP_EARLY + timedelta(seconds=idx),
+                    payload={
+                        "target_player_id": data.TEST_PLAYER_ID_2,
+                        "damage": 34,
+                        "weapon": "rifle",
+                    },
+                )
+            )
+
+    response = client.get(f"/matches/{data.TEST_MATCH_ID_1}/anomalies")
+
+    assert response.status_code == 200
+
+    anomalies = response.json()
+
+    assert len(anomalies) == 1
+
+    anomaly = anomalies[0]
+
+    assert anomaly["match_id"] == data.TEST_MATCH_ID_1
+    assert anomaly["player_id"] == data.TEST_PLAYER_ID_1
+    assert anomaly["event_id"] is None
+    assert anomaly["anomaly_type"] == "high_accuracy"
+    assert anomaly["severity"] == "medium"
+    assert "high accuracy" in anomaly["description"].lower()
