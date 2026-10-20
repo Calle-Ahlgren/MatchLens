@@ -6,11 +6,18 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 import json
+import argparse
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = SCRIPT_DIR / "output"
 OUTPUT_PATH = OUTPUT_DIR / "sample_match.json"
+
+
+NORMAL = "normal"
+IMPOSSIBLE_MOVEMENT = "impossible_movement"
+HIGH_ACCURACY = "high_accuracy"
+SUSPICIOUS_FIRE_RATE = "suspicious_fire_rate"
 
 
 @dataclass(frozen=True)
@@ -60,32 +67,34 @@ def make_match() -> SimMatch:
     return match
 
 
-def make_events(match: SimMatch, players: list[SimPlayer]) -> list[SimEvent]:
+def make_normal_events(match: SimMatch, players: list[SimPlayer]) -> list[SimEvent]:
     events = []
 
     for idx, player in enumerate(players):
+        spawn_x = idx * 10
+        spawn_y = 0
         spawn_event = SimEvent(
             match_id=match.match_id,
             event_type="player_spawned",
             player_id=player.player_id,
             timestamp=match.started_at + timedelta(milliseconds=100),
-            payload={"x": idx * 2, "y": 0},
+            payload={"x": spawn_x, "y": spawn_y},
         )
 
         move_event_1 = SimEvent(
             match_id=match.match_id,
             event_type="position_updated",
             player_id=player.player_id,
-            timestamp=match.started_at + timedelta(milliseconds=100 * (idx + 1) * 2),
-            payload={"x": idx * 2, "y": idx + 1},
+            timestamp=match.started_at + timedelta(seconds=1),
+            payload={"x": spawn_x + 1, "y": spawn_y + 0.5},
         )
 
         move_event_2 = SimEvent(
             match_id=match.match_id,
             event_type="position_updated",
             player_id=player.player_id,
-            timestamp=match.started_at + timedelta(milliseconds=110 * (idx + 1) * 2),
-            payload={"x": idx * 2, "y": idx + 2},
+            timestamp=match.started_at + timedelta(seconds=2),
+            payload={"x": spawn_x + 2, "y": spawn_y + 1.0},
         )
 
         events += [spawn_event, move_event_1, move_event_2]
@@ -143,6 +152,148 @@ def make_events(match: SimMatch, players: list[SimPlayer]) -> list[SimEvent]:
     return events
 
 
+def make_impossible_movement_events(
+    match: SimMatch,
+    players: list[SimPlayer],
+) -> list[SimEvent]:
+    events = []
+
+    player = players[0].player_id
+
+    events.append(
+        SimEvent(
+            match_id=match.match_id,
+            event_type="position_updated",
+            player_id=player,
+            timestamp=match.started_at + timedelta(seconds=5),
+            payload={"x": 0, "y": 0},
+        )
+    )
+
+    events.append(
+        SimEvent(
+            match_id=match.match_id,
+            event_type="position_updated",
+            player_id=player,
+            timestamp=match.started_at + timedelta(seconds=6),
+            payload={"x": 30, "y": 40},
+        )
+    )
+
+    events.sort(key=lambda event: event.timestamp)
+
+    return events
+
+
+def make_high_accuracy_events(
+    match: SimMatch,
+    players: list[SimPlayer],
+) -> list[SimEvent]:
+    events = []
+
+    shot_count = 10
+    hit_count = 9
+    start_offset_seconds = 10
+
+    shooter = players[0]
+    target = players[1]
+
+    for idx in range(shot_count):
+        events.append(
+            SimEvent(
+                match_id=match.match_id,
+                event_type="shot_fired",
+                player_id=shooter.player_id,
+                timestamp=match.started_at
+                + timedelta(seconds=start_offset_seconds + idx),
+                payload={"weapon": "rifle"},
+            )
+        )
+        if idx < hit_count:
+            events.append(
+                SimEvent(
+                    match_id=match.match_id,
+                    event_type="player_hit",
+                    player_id=shooter.player_id,
+                    timestamp=match.started_at
+                    + timedelta(seconds=start_offset_seconds + idx, microseconds=100),
+                    payload={
+                        "target_player_id": target.player_id,
+                        "damage": 34,
+                        "weapon": "rifle",
+                    },
+                )
+            )
+
+    events.sort(key=lambda event: event.timestamp)
+
+    return events
+
+
+def make_suspicious_fire_rate_events(
+    match: SimMatch,
+    players: list[SimPlayer],
+) -> list[SimEvent]:
+    events = []
+
+    shooter = players[2]
+
+    events.append(
+        SimEvent(
+            match_id=match.match_id,
+            event_type="shot_fired",
+            player_id=shooter.player_id,
+            timestamp=match.started_at + timedelta(seconds=30),
+            payload={"weapon": "rifle"},
+        )
+    )
+
+    events.append(
+        SimEvent(
+            match_id=match.match_id,
+            event_type="shot_fired",
+            player_id=shooter.player_id,
+            timestamp=match.started_at + timedelta(seconds=30, milliseconds=50),
+            payload={"weapon": "rifle"},
+        )
+    )
+
+    return events
+
+
+def make_events(
+    match: SimMatch,
+    players: list[SimPlayer],
+    scenarios: set[str] | None = None,
+) -> list[SimEvent]:
+    if scenarios is None:
+        scenarios = {NORMAL}
+
+    events = []
+
+    if NORMAL in scenarios:
+        events += make_normal_events(match, players)
+    if IMPOSSIBLE_MOVEMENT in scenarios:
+        events += make_impossible_movement_events(match, players)
+    if HIGH_ACCURACY in scenarios:
+        events += make_high_accuracy_events(match, players)
+    if SUSPICIOUS_FIRE_RATE in scenarios:
+        events += make_suspicious_fire_rate_events(match, players)
+    
+    return events
+
+
+def generate_sample_match(
+    scenarios: set[str],
+) -> tuple[SimMatch, list[SimPlayer], list[SimEvent]]:
+    players = make_players(4)
+    
+    match = make_match()
+    
+    events = make_events(match, players, scenarios)
+
+    return players, match, events
+
 def summarize_events(events: list[SimEvent]) -> dict[str, int]:
     event_summary = {}
 
@@ -179,12 +330,29 @@ def write_match_data(output: dict[str, object]) -> None:
     OUTPUT_PATH.write_text(output_json, encoding="utf-8")
 
 
+def parse_scenarios() -> set[str]:
+    parser = argparse.ArgumentParser(
+            description="Generate simulated multiplayer telemetry"
+        )
+    
+    parser.add_argument(
+        "--scenarios", 
+        nargs="+",
+        choices=[NORMAL, IMPOSSIBLE_MOVEMENT, HIGH_ACCURACY, SUSPICIOUS_FIRE_RATE],
+        default=[NORMAL],
+        help="Telemetry scenarios to generate (default: normal)")
+
+    args = parser.parse_args()
+
+    scenarios = set(args.scenarios)
+
+    return scenarios
+
+
 def main() -> None:
-    players = make_players(4)
+    scenarios = parse_scenarios()
 
-    match = make_match()
-
-    events = make_events(match, players)
+    players, match, events = generate_sample_match(scenarios)
 
     event_summary = summarize_events(events)
 

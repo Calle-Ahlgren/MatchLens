@@ -1,21 +1,16 @@
 from generate_matches import (
-    make_players,
-    make_match,
-    make_events,
+    generate_sample_match,
     match_to_api_dict,
     player_to_api_dict,
     event_to_api_dict,
+    parse_scenarios,    
 )
 
 from api_client import post_json
 
 
-def upload_sample_match() -> None:
-    players = make_players(4)
-
-    match = make_match()
-
-    events = make_events(match, players)
+def upload_sample_match(scenarios: set[str]) -> None:
+    players, match, events = generate_sample_match(scenarios)
 
     match_dict = match_to_api_dict(match)
 
@@ -35,7 +30,9 @@ def upload_sample_match() -> None:
 
 
 def main() -> None:
-    upload_sample_match()
+    scenarios = parse_scenarios()
+
+    upload_sample_match(scenarios)
 
 
 if __name__ == "__main__":
