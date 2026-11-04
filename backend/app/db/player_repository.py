@@ -1,0 +1,112 @@
+from app.db.connection import get_connection
+from app.schemas.players import PlayerCreate, PlayerRead
+
+
+def player_exists(player_id: str) -> bool:
+    query = """
+        SELECT EXISTS(
+            SELECT 1
+            FROM players
+            WHERE player_id = %s
+        )
+    """
+
+    with get_connection() as conn:
+        result = conn.execute(query, (player_id,)).fetchone()
+
+    return result[0]
+
+
+def create_player(player: PlayerCreate) -> PlayerRead:
+    player_insert = """
+        INSERT INTO players(
+            player_id,
+            display_name
+        )
+        VALUES (%s, %s)
+        RETURNING player_id, display_name, created_at
+    """
+
+    player_values = (player.player_id, player.display_name)
+
+    with get_connection() as conn:
+        result = conn.execute(player_insert, player_values).fetchone()
+
+    return PlayerRead(
+        player_id=result[0],
+        display_name=result[1],
+        created_at=result[2],
+    )
+
+
+def get_player_by_id(player_id: str) -> PlayerRead | None:
+    query = """
+        SELECT player_id, display_name, created_at
+        FROM players
+        WHERE player_id = %s
+    """
+    with get_connection() as conn:
+        result = conn.execute(query, (player_id,)).fetchone()
+
+    if result is None:
+        return None
+
+    return PlayerRead(
+        player_id=result[0],
+        display_name=result[1],
+        created_at=result[2],
+    )
+
+
+def list_players() -> list[PlayerRead]:
+    query = """
+        SELECT player_id, display_name, created_at
+        FROM players
+        ORDER BY created_at
+    """
+
+    players = []
+
+    with get_connection() as conn:
+        rows = conn.execute(query).fetchall()
+
+    for row in rows:
+        players.append(
+            PlayerRead(
+                player_id=row[0],
+                display_name=row[1],
+                created_at=row[2],
+            )
+        )
+
+    return players
+
+
+def list_players_by_match_id(match_id: str) -> list[PlayerRead]:
+    query = """
+        SELECT DISTINCT
+            p.player_id,
+            p.display_name,
+            p.created_at
+        FROM players p
+        JOIN telemetry_events e
+            ON p.player_id = e.player_id
+        WHERE e.match_id = %s
+        ORDER BY p.player_id
+    """
+
+    with get_connection() as conn:
+        rows = conn.execute(query, (match_id,)).fetchall()
+
+    players = []
+
+    for row in rows:
+        players.append(
+            PlayerRead(
+                player_id=row[0],
+                display_name=row[1],
+                created_at=row[2],
+            )
+        )
+
+    return players

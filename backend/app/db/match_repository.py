@@ -1,0 +1,83 @@
+# Database repository functions for matches.
+
+from app.db.connection import get_connection
+from app.schemas.matches import MatchCreate, MatchRead
+
+
+def match_exists(match_id: str) -> bool:
+    query = """
+        SELECT EXISTS(
+            SELECT 1
+            FROM matches
+            WHERE match_id = %s
+        )
+    """
+
+    with get_connection() as conn:
+        result = conn.execute(query, (match_id,)).fetchone()
+
+    return result[0]
+
+
+def create_match(match: MatchCreate) -> MatchRead:
+    match_insert = """
+        INSERT INTO matches (
+            match_id,
+            started_at,
+            map_name,
+            game_mode
+        )
+        VALUES (%s, %s, %s, %s)
+    """
+    match_values = (match.match_id, match.started_at, match.map_name, match.game_mode)
+
+    with get_connection() as conn:
+        conn.execute(match_insert, match_values)
+
+    return MatchRead(**match.model_dump())
+
+
+def get_match_by_id(match_id: str) -> MatchRead | None:
+    query = """
+        SELECT match_id, started_at, map_name, game_mode
+        FROM matches
+        WHERE match_id = %s
+    """
+
+    with get_connection() as conn:
+        result = conn.execute(query, (match_id,)).fetchone()
+
+    if result is None:
+        return None
+
+    return MatchRead(
+        match_id=result[0],
+        started_at=result[1],
+        map_name=result[2],
+        game_mode=result[3],
+    )
+
+
+def list_matches() -> list[MatchRead]:
+    query = """
+        SELECT match_id, started_at, map_name, game_mode
+        FROM matches
+        ORDER BY started_at DESC
+    """
+
+    matches = []
+
+    with get_connection() as conn:
+        rows = conn.execute(query).fetchall()
+
+    for row in rows:
+        matches.append(
+            MatchRead(
+                match_id=row[0],
+                started_at=row[1],
+                map_name=row[2],
+                game_mode=row[3],
+            )
+        )
+
+    return matches

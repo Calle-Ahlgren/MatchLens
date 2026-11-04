@@ -1,0 +1,29 @@
+.match-card {
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.match-card-header h3 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-h);
+}
+
+.details-button {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--bg);
+    color: var(--text-h);
+    cursor: pointer;
+    margin-top: 8px;
+}
